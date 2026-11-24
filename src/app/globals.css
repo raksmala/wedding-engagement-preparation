@@ -347,3 +347,107 @@ a.tombol-utama {
     align-items: end;
   }
 }
+
+.bagian {
+  margin: 0 0 1.5rem;
+}
+
+.bagian h2,
+.kartu h3 {
+  margin: 0 0 0.5rem;
+  line-height: 1.2;
+}
+
+.kartu h3 {
+  font-size: 1.375rem;
+}
+
+.kartu .rincian {
+  margin-bottom: 1rem;
+}
+
+.kartu .tombol-sekunder {
+  text-decoration: none;
+}
+
+.pilih-kategori {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1rem 0 1.5rem;
+}
+
+.pilih-kategori label {
+  display: grid;
+  gap: 0.25rem;
+  font-weight: 600;
+}
+
+.pilih-kategori select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--garis);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--teks);
+  font: inherit;
+  font-weight: 400;
+}
+
+a.tombol-sekunder {
+  text-decoration: none;
+}
+
+.lampiran {
+  margin: 0 0 1rem;
+}
+
+.lampiran h4 {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+}
+
+.daftar-lampiran {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.daftar-lampiran li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  overflow-wrap: anywhere;
+}
+
+.unggah {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.unggah label {
+  font-weight: 600;
+}
+
+.unggah input[type="file"] {
+  min-height: 44px;
+  padding: 0.5rem 0;
+  font: inherit;
+  max-width: 100%;
+}
+
+.petunjuk-unggah {
+  color: var(--teks-lembut);
+  font-size: 0.875rem;
+}
+
+@media (min-width: 560px) {
+  .pilih-kategori {
+    grid-template-columns: 1fr auto;
+    align-items: end;
+  }
+}

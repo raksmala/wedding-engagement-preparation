@@ -6,19 +6,21 @@ import { embedSatu } from '@/lib/embed';
 import { createClient } from '@/lib/supabase/server';
 import { formatTanggalJamWib } from '@/lib/tanggal';
 import { linkWhatsApp } from '@/lib/whatsapp';
+import { urlLampiran } from '@/lib/urlLampiran';
+import { adalahUuid } from '@/lib/validasi';
+import type { TipeKomponen } from '@/lib/komponen';
+import { DaftarPaket } from './DaftarPaket';
 import { UbahStatus } from './UbahStatus';
-
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default async function VendorDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  if (!UUID.test(id)) notFound();
+  if (!adalahUuid(id)) notFound();
 
   const supabase = await createClient();
   const { data: v, error } = await supabase
     .from('vendor')
     .select(
-      'id, nama, status, nama_kontak, whatsapp, instagram, link, catatan, diubah_pada, diubah_oleh, kategori_vendor(nama), vendor_acara(acara(id, nama))',
+      'id, nama, status, kategori_vendor_id, nama_kontak, whatsapp, instagram, link, catatan, diubah_pada, diubah_oleh, kategori_vendor(nama), vendor_acara(acara(id, nama))',
     )
     .eq('id', id)
     .maybeSingle();
@@ -30,6 +32,27 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
     const { data: editor } = await supabase.from('editor').select('nama').eq('id', v.diubah_oleh).maybeSingle();
     pengubah = editor?.nama ?? null;
   }
+
+  const [paket, komponen] = await Promise.all([
+    supabase
+      .from('paket')
+      .select(
+        'id, nama, harga, syarat_dp, lain_lain, catatan, status, lampiran, nilai_komponen(komponen_id, nilai)',
+      )
+      .eq('vendor_id', v.id)
+      .order('dibuat_pada'),
+    supabase
+      .from('komponen')
+      .select('id, nama, tipe, satuan')
+      .eq('kategori_vendor_id', v.kategori_vendor_id)
+      .order('urutan')
+      .order('nama'),
+  ]);
+  if (paket.error || komponen.error) throw new Error('Gagal memuat paket');
+  const urlBerkas = await urlLampiran(
+    supabase,
+    paket.data.flatMap((p) => p.lampiran),
+  );
 
   const linkWa = v.whatsapp ? linkWhatsApp(v.whatsapp) : null;
   const linkAman = v.link && /^https?:\/\//i.test(v.link) ? v.link : null;
@@ -97,7 +120,12 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
         </Link>
       </div>
 
-      {/* Slot Paket (Task 6): section daftar Paket vendor ini dipasang di sini. */}
+      <DaftarPaket
+        vendorId={v.id}
+        paket={paket.data}
+        komponen={komponen.data.map((k) => ({ ...k, tipe: k.tipe as TipeKomponen }))}
+        url={urlBerkas}
+      />
       {/* Slot Kontrak dan Pembayaran (Task 9): section Kontrak, Alokasi Acara, dan Pembayaran dipasang di sini. */}
       {/* Slot Log Kontak (Task 10): section Log Kontak dan Tugas follow-up dipasang di sini. */}
 

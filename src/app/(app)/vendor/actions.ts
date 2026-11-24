@@ -74,6 +74,9 @@ export async function simpanVendor(formData: FormData): Promise<HasilSimpanVendo
   if (error) {
     console.error('simpanVendor:', error.message);
     if (error.message.includes('vendor_tidak_ditemukan')) return gagal(TIDAK_DITEMUKAN);
+    if (error.message.includes('kategori_terkunci')) {
+      return gagal('Kategori tidak bisa diubah karena paket vendor ini sudah punya nilai komponen.');
+    }
     if (error.code === '23503') return gagal('Kategori atau acara yang dipilih tidak ditemukan.');
     return gagal('Vendor belum tersimpan. Coba lagi.');
   }

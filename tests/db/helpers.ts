@@ -69,3 +69,5 @@ export async function bersihkanTest(): Promise<void> {
     if (u.email?.endsWith(EMAIL_TEST)) await admin.auth.admin.deleteUser(u.id);
   }
 }
+
+export const klienAnon: SupabaseClient = createClient(URL, ANON, opsi);

@@ -30,3 +30,16 @@ export function StatusLabel({ status }: { status: StatusVendor | StatusLain }) {
   const { label, warna } = TAMPIL[status];
   return <span className={`status-label status-${warna}`}>{label}</span>;
 }
+
+export type StatusPaket = Database['public']['Enums']['status_paket'];
+
+export const LABEL_STATUS_PAKET: Record<StatusPaket, { label: string; warna: Warna }> = {
+  aktif: { label: 'Aktif', warna: 'teks' },
+  dipilih: { label: 'Dipilih', warna: 'aksen' },
+  tidak_dipilih: { label: 'Tidak dipilih', warna: 'lembut' },
+};
+
+export function StatusPaketLabel({ status }: { status: StatusPaket }) {
+  const { label, warna } = LABEL_STATUS_PAKET[status];
+  return <span className={`status-label status-${warna}`}>{label}</span>;
+}
