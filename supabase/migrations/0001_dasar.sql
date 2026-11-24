@@ -114,6 +114,8 @@ $$;
 
 revoke all on function is_editor(), editor_saat_ini(), pastikan_editor() from public, anon;
 grant execute on function is_editor(), editor_saat_ini(), pastikan_editor() to authenticated;
+-- Service role menulis tabel beraudit lewat isi_audit(), yang memanggil editor_saat_ini().
+grant execute on function is_editor(), editor_saat_ini() to service_role;
 
 -- Audit: kolom diisi trigger, bukan aplikasi.
 create function isi_audit() returns trigger

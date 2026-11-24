@@ -166,6 +166,112 @@ export type Database = {
         }
         Relationships: []
       }
+      kategori_vendor: {
+        Row: {
+          arsip: boolean
+          dibuat_oleh: string | null
+          dibuat_pada: string
+          diubah_oleh: string | null
+          diubah_pada: string
+          id: string
+          nama: string
+          urutan: number
+        }
+        Insert: {
+          arsip?: boolean
+          dibuat_oleh?: string | null
+          dibuat_pada?: string
+          diubah_oleh?: string | null
+          diubah_pada?: string
+          id?: string
+          nama: string
+          urutan?: number
+        }
+        Update: {
+          arsip?: boolean
+          dibuat_oleh?: string | null
+          dibuat_pada?: string
+          diubah_oleh?: string | null
+          diubah_pada?: string
+          id?: string
+          nama?: string
+          urutan?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kategori_vendor_dibuat_oleh_fkey"
+            columns: ["dibuat_oleh"]
+            isOneToOne: false
+            referencedRelation: "editor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kategori_vendor_diubah_oleh_fkey"
+            columns: ["diubah_oleh"]
+            isOneToOne: false
+            referencedRelation: "editor"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      log_kontak: {
+        Row: {
+          dibuat_oleh: string | null
+          dibuat_pada: string
+          diubah_oleh: string | null
+          diubah_pada: string
+          id: string
+          isi: string
+          saluran: Database["public"]["Enums"]["saluran_kontak"]
+          tanggal: string
+          vendor_id: string
+        }
+        Insert: {
+          dibuat_oleh?: string | null
+          dibuat_pada?: string
+          diubah_oleh?: string | null
+          diubah_pada?: string
+          id?: string
+          isi: string
+          saluran: Database["public"]["Enums"]["saluran_kontak"]
+          tanggal: string
+          vendor_id: string
+        }
+        Update: {
+          dibuat_oleh?: string | null
+          dibuat_pada?: string
+          diubah_oleh?: string | null
+          diubah_pada?: string
+          id?: string
+          isi?: string
+          saluran?: Database["public"]["Enums"]["saluran_kontak"]
+          tanggal?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "log_kontak_dibuat_oleh_fkey"
+            columns: ["dibuat_oleh"]
+            isOneToOne: false
+            referencedRelation: "editor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "log_kontak_diubah_oleh_fkey"
+            columns: ["diubah_oleh"]
+            isOneToOne: false
+            referencedRelation: "editor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "log_kontak_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pihak: {
         Row: {
           arsip: boolean
@@ -214,6 +320,132 @@ export type Database = {
           },
         ]
       }
+      vendor: {
+        Row: {
+          catatan: string | null
+          dibuat_oleh: string | null
+          dibuat_pada: string
+          diubah_oleh: string | null
+          diubah_pada: string
+          id: string
+          instagram: string | null
+          kategori_vendor_id: string
+          link: string | null
+          nama: string
+          nama_kontak: string | null
+          status: Database["public"]["Enums"]["status_vendor"]
+          whatsapp: string | null
+        }
+        Insert: {
+          catatan?: string | null
+          dibuat_oleh?: string | null
+          dibuat_pada?: string
+          diubah_oleh?: string | null
+          diubah_pada?: string
+          id?: string
+          instagram?: string | null
+          kategori_vendor_id: string
+          link?: string | null
+          nama: string
+          nama_kontak?: string | null
+          status?: Database["public"]["Enums"]["status_vendor"]
+          whatsapp?: string | null
+        }
+        Update: {
+          catatan?: string | null
+          dibuat_oleh?: string | null
+          dibuat_pada?: string
+          diubah_oleh?: string | null
+          diubah_pada?: string
+          id?: string
+          instagram?: string | null
+          kategori_vendor_id?: string
+          link?: string | null
+          nama?: string
+          nama_kontak?: string | null
+          status?: Database["public"]["Enums"]["status_vendor"]
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_dibuat_oleh_fkey"
+            columns: ["dibuat_oleh"]
+            isOneToOne: false
+            referencedRelation: "editor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_diubah_oleh_fkey"
+            columns: ["diubah_oleh"]
+            isOneToOne: false
+            referencedRelation: "editor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_kategori_vendor_id_fkey"
+            columns: ["kategori_vendor_id"]
+            isOneToOne: false
+            referencedRelation: "kategori_vendor"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_acara: {
+        Row: {
+          acara_id: string
+          dibuat_oleh: string | null
+          dibuat_pada: string
+          diubah_oleh: string | null
+          diubah_pada: string
+          vendor_id: string
+        }
+        Insert: {
+          acara_id: string
+          dibuat_oleh?: string | null
+          dibuat_pada?: string
+          diubah_oleh?: string | null
+          diubah_pada?: string
+          vendor_id: string
+        }
+        Update: {
+          acara_id?: string
+          dibuat_oleh?: string | null
+          dibuat_pada?: string
+          diubah_oleh?: string | null
+          diubah_pada?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_acara_acara_id_fkey"
+            columns: ["acara_id"]
+            isOneToOne: false
+            referencedRelation: "acara"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_acara_dibuat_oleh_fkey"
+            columns: ["dibuat_oleh"]
+            isOneToOne: false
+            referencedRelation: "editor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_acara_diubah_oleh_fkey"
+            columns: ["diubah_oleh"]
+            isOneToOne: false
+            referencedRelation: "editor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_acara_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -225,6 +457,8 @@ export type Database = {
     }
     Enums: {
       jenis_acara: "lamaran" | "akad" | "resepsi" | "ngunduh_mantu" | "lainnya"
+      saluran_kontak: "whatsapp" | "telepon" | "bertemu" | "email" | "lainnya"
+      status_vendor: "kandidat" | "survei_nego" | "booked" | "selesai" | "batal"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -356,6 +590,8 @@ export const Constants = {
   public: {
     Enums: {
       jenis_acara: ["lamaran", "akad", "resepsi", "ngunduh_mantu", "lainnya"],
+      saluran_kontak: ["whatsapp", "telepon", "bertemu", "email", "lainnya"],
+      status_vendor: ["kandidat", "survei_nego", "booked", "selesai", "batal"],
     },
   },
 } as const

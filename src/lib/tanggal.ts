@@ -46,3 +46,17 @@ export function kelompokJatuhTempo(
   if (selisih <= 7) return 'tujuh_hari';
   return null;
 }
+
+const formatJam = new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'Asia/Jakarta',
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+});
+
+// Contoh: "24 November 2026 15.05 WIB". Input berupa timestamp ISO.
+export function formatTanggalJamWib(iso: string): string {
+  const waktu = new Date(iso);
+  const [jam, menit] = formatJam.format(waktu).split(':');
+  return `${formatTanggal(hariIniJakarta(waktu))} ${jam}.${menit} WIB`;
+}

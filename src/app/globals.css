@@ -224,3 +224,126 @@ a.tombol-utama {
   flex-wrap: wrap;
   gap: 0.75rem;
 }
+
+.status-label {
+  font-weight: 600;
+}
+
+.status-aksen {
+  color: var(--accent);
+}
+
+.status-primer {
+  color: var(--primary);
+}
+
+.status-lembut {
+  color: var(--teks-lembut);
+}
+
+.status-teks {
+  color: var(--teks);
+}
+
+.form .pilihan {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 44px;
+  font-weight: 400;
+}
+
+.form .pilihan input {
+  width: 24px;
+  min-height: 24px;
+  height: 24px;
+  flex: none;
+}
+
+.form fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.form legend {
+  padding: 0;
+  font-weight: 600;
+}
+
+.petunjuk {
+  margin: 0;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.filter {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1rem 0 1.5rem;
+}
+
+.filter label {
+  display: grid;
+  gap: 0.25rem;
+  font-weight: 600;
+}
+
+.filter select,
+.ubah-status select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--garis);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--teks);
+  font: inherit;
+  font-weight: 400;
+}
+
+.ubah-status {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0 0 1.5rem;
+}
+
+.ubah-status label {
+  display: grid;
+  gap: 0.25rem;
+  font-weight: 600;
+}
+
+.rincian {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0 0 1.5rem;
+}
+
+.rincian div {
+  display: grid;
+  gap: 0.125rem;
+}
+
+.rincian dt {
+  color: var(--teks-lembut);
+  font-size: 0.875rem;
+}
+
+.rincian dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.jejak-audit {
+  margin: 1.5rem 0 0;
+  color: var(--teks-lembut);
+  font-size: 0.875rem;
+}
+
+@media (min-width: 560px) {
+  .filter {
+    grid-template-columns: repeat(3, 1fr) auto;
+    align-items: end;
+  }
+}
