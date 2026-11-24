@@ -55,12 +55,16 @@ create table acara (
 );
 
 -- Fungsi akses
+-- Tidak memercayai klaim email di JWT: cari user di auth.users, wajib terkonfirmasi.
 create function is_editor() returns boolean
 language sql stable security definer set search_path = public
 as $$
   select exists (
-    select 1 from editor_diizinkan
-    where email = lower(auth.jwt() ->> 'email')
+    select 1
+    from auth.users u
+    join editor_diizinkan d on d.email = lower(u.email)
+    where u.id = auth.uid()
+      and u.email_confirmed_at is not null
   );
 $$;
 
@@ -74,13 +78,15 @@ create function pastikan_editor() returns uuid
 language plpgsql security definer set search_path = public
 as $$
 declare
-  v_email text := lower(auth.jwt() ->> 'email');
+  v_email text;
   v_nama text;
   v_id uuid;
 begin
   if auth.uid() is null or not is_editor() then
     raise exception 'bukan_editor';
   end if;
+
+  select lower(email) into v_email from auth.users where id = auth.uid();
 
   select id into v_id from editor where auth_user_id = auth.uid();
   if found then
