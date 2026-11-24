@@ -6,6 +6,8 @@ Laporan ini disusun pada 24 November 2026 (Task 14) tanpa menjalankan apa pun: t
 
 Pembaruan (commit "fix: tutup celah delivery gate fase 1"): halaman 404 Indonesia, filter Acara dan Vendor di Tugas, test e2e Pembayaran Terjadwal di kelompok Terlambat, dan tap target link alamat web vendor sudah diperbaiki di kode. Semuanya baru dicek sintaksnya, belum dijalankan di browser atau lewat test, jadi tetap BELUM DIVERIFIKASI. Rinciannya di bagian 6.
 
+Pembaruan kedua (commit "fix: pindahkan proxy ke src dan rapikan panduan deploy"): `middleware.ts` di root ternyata tidak pernah dijalankan karena aplikasi memakai `src/app`, sekarang dipindah ke `src/proxy.ts`. Warna placeholder diatur, `/acara/{id}` punya halaman tidak ditemukan sendiri, judul tab halaman 404, angka kontras tombol nonaktif dikoreksi, dan urutan `docs/deploy.md` dirapikan. Semuanya juga BELUM DIVERIFIKASI.
+
 Gate ini baru lulus kalau semua test di bagian 4 PASS, tabel elemen di bagian 3 terisi tanpa FAIL di 375px dan desktop, dan temuan FAIL di bagian 6 sudah diperbaiki atau diputuskan Rendy.
 
 ## 1. Hasil kontras (dihitung)
@@ -23,11 +25,11 @@ Rumus luminans relatif WCAG 2.x, dihitung dengan script node kecil. Batas 4.5:1 
 | `--primary` di atas `--surface` | 5.75 | 4.5 | PASS | Tidak dipakai untuk teks saat ini |
 | `--accent` di atas `--surface` | 3.36 | 4.5 | FAIL, tidak dipakai | Di kolom terpilih semua `.status-label` ditimpa jadi `--teks` (`.tabel-komparasi .kolom-dipilih .status-label`). Tercatat di `DESIGN.md` sebagai "jangan dipakai" |
 | `--teks` di atas `#fff` (isian form) | 15.33 | 4.5 | PASS | |
-| `--teks-lembut` di atas `#fff` | 10.10 | 4.5 | PASS | Belum dipakai |
+| `--teks-lembut` di atas `#fff` | 10.10 | 4.5 | PASS | Placeholder isian (`::placeholder` dengan `opacity: 1`), diperbaiki di kode. Tampilan di Safari dan Firefox BELUM DIVERIFIKASI |
 | `--primary` di atas `#fff` | 10.11 | 4.5 | PASS | Belum dipakai |
 | `#fff` di atas `--primary` (`.tombol-utama`) | 10.11 | 4.5 | PASS | |
-| `.tombol-utama:disabled` (opacity 0.7 di atas `--bg`) | 4.87 | 4.5 | PASS | |
-| `.tombol-bahaya:disabled` (opacity 0.7) | 4.45 | 4.5 | Di bawah batas, dikecualikan | Kontrol nonaktif dikecualikan WCAG 1.4.3. Dicatat apa adanya |
+| `.tombol-utama:disabled` (opacity 0.7 di atas `--bg`) | 4.88 | 4.5 | PASS | |
+| `.tombol-bahaya:disabled` (opacity 0.7) | 4.46 | 4.5 | Di bawah batas, dikecualikan | Kontrol nonaktif dikecualikan WCAG 1.4.3. Dicatat apa adanya |
 | `.tombol-sekunder:disabled` (opacity 0.7, baru di commit ini) | 5.37 | 4.5 | PASS | |
 | `--garis` `#8a7a7d` di atas `--bg` (batas kartu, tombol sekunder) | 3.58 | 3 | PASS | |
 | `--garis` di atas `#fff` (batas isian) | 4.07 | 3 | PASS | |
@@ -37,9 +39,9 @@ Rumus luminans relatif WCAG 2.x, dihitung dengan script node kecil. Batas 4.5:1 
 | `--accent` di atas `--bg` (bingkai `.pesan-berhasil`) | 5.20 | 3 | PASS | |
 | Bingkai dialog `--primary` di atas backdrop (`--teks` 50% di atas `--bg`) | 2.95 | 3 | Di bawah batas, info | Tepi dialog tetap terlihat dari latar dialog `--bg` terhadap backdrop: 3.01 (PASS) |
 | `--garis` sebagai teks | 3.58 | 4.5 | FAIL, tidak dipakai | `grep` tidak menemukan `color: var(--garis)` |
-| Placeholder bawaan Chromium `#757575` di atas `#fff` | 4.61 | 4.5 | PASS | Warna placeholder tidak diatur di CSS |
-| Placeholder bawaan WebKit `darkGray` `#a9a9a9` di atas `#fff` | 2.35 | 4.5 | **FAIL** | Berlaku kalau Safari memakai nilai bawaan ini. Nilai pasti di iOS belum dicek |
-| Placeholder bawaan Firefox (teks 54%) di atas `#fff` | 3.49 | 4.5 | **FAIL** | |
+| Placeholder bawaan Chromium `#757575` di atas `#fff` | 4.61 | 4.5 | PASS | Tidak dipakai lagi, ditimpa `::placeholder` |
+| Placeholder bawaan WebKit `darkGray` `#a9a9a9` di atas `#fff` | 2.35 | 4.5 | FAIL, diperbaiki di kode | Sebelumnya berlaku di Safari. Sekarang ditimpa `::placeholder { color: var(--teks-lembut) }` (10.10). BELUM DIVERIFIKASI di iOS |
+| Placeholder bawaan Firefox (teks 54%) di atas `#fff` | 3.49 | 4.5 | FAIL, diperbaiki di kode | Sekarang ditimpa `--teks-lembut` dengan `opacity: 1` (10.10). BELUM DIVERIFIKASI di Firefox |
 
 Teks besar (judul Cormorant 1.375rem sampai 2rem) semuanya memakai `--primary` di atas `--bg` (8.90), jadi lolos batas teks normal sekalipun.
 
@@ -49,15 +51,16 @@ Teks besar (judul Cormorant 1.375rem sampai 2rem) semuanya memakai `--primary` d
 |---|---|---|
 | Tidak ada em dash di `src`, `tests`, `docs`, `DESIGN.md`, `CONTEXT.md`, migration, `public` | PASS | `grep -rn` untuk karakter em dash (U+2014) hanya menemukan `docs/plans/fase-1.md:24`, yaitu aturan yang menyebut karakternya. Tidak ada en dash. File baru di commit ini juga dicek: 0 hasil |
 | Tidak ada em dash di pesan commit | PASS | `git log --format=%B` disaring dengan `grep -c` untuk U+2014: 0 |
+| File proxy (refresh sesi) terbaca Next.js | **FAIL**, diperbaiki di kode, BELUM DIVERIFIKASI | `middleware.ts` ada di root, padahal aplikasi memakai `src/app`. Next.js hanya membaca file itu di `src/` (sejajar dengan `app/`), jadi refresh sesi tidak pernah berjalan. Dipindah ke `src/proxy.ts` dengan fungsi `proxy` (nama baru di Next.js 16), `config.matcher` sama. Helper `src/lib/supabase/middleware.ts` tidak diubah |
 | Tidak ada `outline: none` tanpa pengganti | PASS | `grep -rn outline src` hanya menemukan `:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px }` dan `.navigasi-bawah :focus-visible { outline-offset: -4px }` |
 | Setiap halaman data punya `loading.tsx` dan `error.tsx` | PASS | Lihat daftar di bawah. Boundary di folder induk berlaku untuk halaman di bawahnya |
-| Halaman 404 berbahasa Indonesia | Diperbaiki, BELUM DIVERIFIKASI | Sebelumnya FAIL: tidak ada `src/app/not-found.tsx`. Sekarang ada, berisi judul "Rendy & Dinar", pesan "Halaman tidak ditemukan.", dan link "Kembali ke dashboard" ke `/`. Halaman ini menangani URL yang tidak ada dan `notFound()` di `/acara/[id]`. Dirender di layout root, jadi tanpa navigasi bawah. `vendor/[id]` (termasuk `vendor/[id]/ubah`), `vendor/[id]/paket`, dan `komparasi/[kategoriId]` tetap memakai `not-found.tsx` sendiri |
+| Halaman 404 berbahasa Indonesia | Diperbaiki, BELUM DIVERIFIKASI | Sebelumnya FAIL: tidak ada `src/app/not-found.tsx`. Sekarang ada, berisi judul "Rendy & Dinar", pesan "Halaman tidak ditemukan.", dan link "Kembali ke dashboard" ke `/`. Halaman root ini hanya dipakai untuk URL yang tidak cocok dengan route mana pun (misalnya `/tidak-ada`). Dirender di layout root, jadi tanpa navigasi bawah, dengan judul tab "Halaman tidak ditemukan \| Rendy & Dinar". Setiap `notFound()` sekarang punya `not-found.tsx` sendiri di dalam `(app)`, jadi tampil dengan navigasi bawah: `acara/[id]` (baru, "Acara tidak ditemukan"), `vendor/[id]` (termasuk `vendor/[id]/ubah`), `vendor/[id]/paket`, dan `komparasi/[kategoriId]` |
 | Tidak ada link ke route yang tidak ada | PASS | Semua `href`, `redirect()`, `router.push/replace`, dan `action` form dicocokkan ke `page.tsx`. Daftar di bawah |
 | Kata dari daftar `_Avoid_` `CONTEXT.md` di teks UI | PASS setelah perbaikan | Dua teks memakai "tahap" (dihindari untuk Status Vendor), diperbaiki di commit ini. Sisanya positif palsu, lihat di bawah |
 | Warna hanya dari token | PASS dengan catatan | `grep -rnoE "#[0-9a-fA-F]{3,8}"` di `src` dan `public`: selain token di `:root`, hanya `#fff` (6 kali di `globals.css`), `rgb(43 35 37 / 0.5)` untuk backdrop, serta `#80172c` dan `#f5efef` literal di `layout.tsx` (`themeColor`) dan `manifest.webmanifest`. Semuanya sekarang tercatat di `DESIGN.md` beserta alasan dan kontrasnya |
 | Satu-satunya inline style | Dicatat | `src/app/login/page.tsx`: `padding: 2rem 1rem; maxWidth: 480; margin: 0 auto`. Nilainya dicatat di `DESIGN.md` bagian Layout |
 | Tap target 44px untuk link yang berdiri sendiri | PASS setelah perbaikan, BELUM DIVERIFIKASI | Empat link tanpa class 44px diberi `tautan-aksi` di commit Task 14. Sisa terakhir, link alamat web vendor di `<dd>` detail Vendor (`vendor/[id]/page.tsx`), sekarang juga memakai `tautan-aksi`. URL panjang tetap bisa patah baris karena `.rincian dd` memakai `overflow-wrap: anywhere`. Cek di 375px |
-| Tombol nonaktif terlihat nonaktif | PASS setelah perbaikan | `.tombol-sekunder` tidak punya gaya `:disabled`, sehingga "Simpan status", "Naik", dan "Turun" yang nonaktif terlihat sama dengan yang aktif. Ditambah `opacity: 0.7; cursor: not-allowed` di commit ini |
+| Tombol nonaktif terlihat nonaktif | Diperbaiki di kode, BELUM DIVERIFIKASI | Sebelumnya `.tombol-sekunder` tidak punya gaya `:disabled`, sehingga "Simpan status", "Naik", dan "Turun" yang nonaktif terlihat sama dengan yang aktif. Ditambah `opacity: 0.7; cursor: not-allowed` di commit ini |
 | `lang="id"` di `<html>` | PASS | `src/app/layout.tsx` |
 | Nominal memakai `tabular-nums` | PASS | `.rupiah` dipakai di `Rupiah.tsx`, sel Harga Komparasi, dan Harga di daftar Paket |
 
@@ -229,9 +232,10 @@ Kolom "Aksi yang diharapkan" diisi dari kode. Kolom 375px dan Desktop diisi Rend
 | `/share` | "Cabut", lalu dialog "Cabut" atau "Batal" | Link jadi "Dicabut", kotak link hilang, fokus ke judul kartu | BELUM DICEK | BELUM DICEK | |
 | `/s/{token}` | (tidak ada tombol atau link) | Menampilkan label dan bagian yang dicentang saja. Token dicabut atau tidak ada: "Link ini sudah tidak aktif." | BELUM DICEK | BELUM DICEK | Sengaja tanpa link ke halaman Editor |
 | `/s/{token}` | "Coba lagi" di tampilan error | Memanggil `reset()` | BELUM DICEK | BELUM DICEK | |
-| URL yang tidak ada, `/acara/{id}` tidak ada | "Kembali ke dashboard" | Halaman 404 Indonesia tanpa navigasi bawah. Link ke `/`. Belum login: `(app)/layout.tsx` mengalihkan ke `/login` | BELUM DICEK | BELUM DICEK | `src/app/not-found.tsx` baru |
+| URL yang tidak cocok dengan route mana pun | "Kembali ke dashboard" | Halaman 404 Indonesia tanpa navigasi bawah, judul tab "Halaman tidak ditemukan \| Rendy & Dinar". Link ke `/`. Belum login: `(app)/layout.tsx` mengalihkan ke `/login` | BELUM DICEK | BELUM DICEK | `src/app/not-found.tsx` baru |
+| `/acara/{id}` tidak ada | "Kembali ke daftar acara" | "Acara tidak ditemukan" dengan navigasi bawah. Link ke `/acara` | BELUM DICEK | BELUM DICEK | `(app)/acara/[id]/not-found.tsx` baru, sama dengan versi Vendor |
 
-Route tanpa tampilan: `/auth/callback` (menukar code, memanggil `pastikan_editor()`, lalu ke `/` atau `/login?error=...`) dan `/api/dev-login` (404 di produksi). Keduanya dicek lewat langkah 9 di `docs/deploy.md`.
+Route tanpa tampilan: `/auth/callback` (menukar code, memanggil `pastikan_editor()`, lalu ke `/` atau `/login?error=...`) dan `/api/dev-login` (404 di produksi). Keduanya dicek lewat langkah 10 di `docs/deploy.md`.
 
 ## 4. Test yang harus dijalankan
 
@@ -252,7 +256,7 @@ Semua BELUM DIJALANKAN. Jalankan dengan `.env.local` berisi key project dev dan 
 
 | No | Kriteria | Implementasi (commit dan file) | Test yang mencakup | Status |
 |---|---|---|---|---|
-| 1 | Rendy dan Dinar bisa login dari HP masing-masing dan melihat data yang sama | `7ff0ea9`, `975fb7c`. `supabase/migrations/0001_dasar.sql` (`is_editor()`, `pastikan_editor()`, RLS), `src/app/login/*`, `src/app/auth/callback/route.ts`, `middleware.ts`, `src/lib/supabase/*`, `src/app/(app)/layout.tsx`. Semua data dibaca lewat RLS yang sama untuk kedua Editor | `tests/db/akses.test.ts`, `tests/e2e/login.spec.ts` ("setelah dev-login..."). E2E memakai `/api/dev-login`, bukan Google sungguhan | BELUM DIVERIFIKASI. Login Google asli hanya bisa dicek di produksi (`docs/deploy.md` langkah 9) |
+| 1 | Rendy dan Dinar bisa login dari HP masing-masing dan melihat data yang sama | `7ff0ea9`, `975fb7c`. `supabase/migrations/0001_dasar.sql` (`is_editor()`, `pastikan_editor()`, RLS), `src/app/login/*`, `src/app/auth/callback/route.ts`, `src/proxy.ts` (dulu `middleware.ts` di root, tidak terbaca), `src/lib/supabase/*`, `src/app/(app)/layout.tsx`. Semua data dibaca lewat RLS yang sama untuk kedua Editor | `tests/db/akses.test.ts`, `tests/e2e/login.spec.ts` ("setelah dev-login..."). E2E memakai `/api/dev-login`, bukan Google sungguhan | BELUM DIVERIFIKASI. Login Google asli dan sesi yang bertahan lebih dari 1 jam hanya bisa dicek di produksi (`docs/deploy.md` langkah 10) |
 | 2 | Email Google lain ditolak | Sama dengan nomor 1. Callback memanggil `signOut()` lalu ke `/login?error=bukan-editor` | `tests/db/akses.test.ts` ("orang luar tidak bisa membaca apa pun", "email di allowlist tapi belum terkonfirmasi bukan editor", "anon tidak bisa memanggil pastikan_editor"), `tests/e2e/login.spec.ts` ("email di luar allowlist ditolak dengan pesan") | BELUM DIVERIFIKASI |
 | 3 | Semua vendor Lamaran yang sudah ada bisa diinput lengkap dengan Kontrak dan Pembayarannya | `28b8b18`, `f865d47`, `5f870ee`, `0274cf3`, `217e632`, `6798fa1`, `c7dc219`, `13dd3f3`. Migration `0002_vendor.sql`, `0003_keuangan.sql`, halaman `src/app/(app)/vendor/**` | `tests/e2e/vendor.spec.ts`, `paket.spec.ts`, `pembayaran.spec.ts`, `tests/db/vendor.test.ts`, `paket.test.ts`, `keuangan.test.ts`, `kontrak-fungsi.test.ts` | BELUM DIVERIFIKASI. Butuh Rendy menginput data vendor Lamaran yang asli |
 | 4 | Komparasi menampilkan minimal tiga Paket dari Vendor berbeda secara sejajar per Komponen, dan terbaca di layar HP | `481ee0f`. `src/app/(app)/komparasi/[kategoriId]/page.tsx`, `.tabel-geser` dan `.tabel-komparasi` di `globals.css` | `tests/e2e/komparasi.spec.ts` ("375px: baris berurutan, sel kosong, geser horizontal hanya di tabel, label tetap terlihat", memakai Paket A, B, C) | BELUM DIVERIFIKASI |
@@ -265,18 +269,27 @@ Semua BELUM DIJALANKAN. Jalankan dengan `.env.local` berisi key project dev dan 
 
 ### FAIL yang ditemukan dan belum diperbaiki
 
-1. **Kontras placeholder bergantung browser.** Warna `::placeholder` tidak diatur. Nilai bawaan WebKit (`darkGray`, 2.35:1) dan Firefox (3.49:1) gagal 4.5:1 di atas `#fff`. Perbaikannya butuh satu warna netral baru (contoh `#6b5e60`, 6.19:1) yang tetap terlihat berbeda dari isian asli. Ini keputusan desain, jadi tidak diubah di commit ini.
+Tidak ada lagi di kode. Semua temuan di bawah sudah diperbaiki di kode, tetapi belum diverifikasi.
 
 ### FAIL dan celah yang sudah diperbaiki di kode (BELUM DIVERIFIKASI)
 
 Diperbaiki di commit "fix: tutup celah delivery gate fase 1". Hanya dicek sintaksnya, belum dijalankan di browser atau lewat test.
 
-1. **Halaman 404 bawaan Next.js berbahasa Inggris.** Ditambah `src/app/not-found.tsx`: judul "Rendy & Dinar", pesan "Halaman tidak ditemukan.", link "Kembali ke dashboard" ke `/`. Memakai class baru `.halaman-mandiri` (lebar dan padding sama dengan `.halaman-pembaca`), tanpa navigasi bawah. `not-found.tsx` yang sudah ada di `vendor/[id]`, `vendor/[id]/paket`, dan `komparasi/[kategoriId]` tidak diubah. Catatan: `/acara/{id}` yang tidak ada sekarang tampil tanpa navigasi bawah, karena boundary-nya di root. Kalau ingin navigasi tetap tampil, tambah `not-found.tsx` di `(app)/acara/[id]/`.
+1. **Halaman 404 bawaan Next.js berbahasa Inggris.** Ditambah `src/app/not-found.tsx`: judul "Rendy & Dinar", pesan "Halaman tidak ditemukan.", link "Kembali ke dashboard" ke `/`. Memakai class baru `.halaman-mandiri` (lebar dan padding sama dengan `.halaman-pembaca`), tanpa navigasi bawah. `not-found.tsx` yang sudah ada di `vendor/[id]`, `vendor/[id]/paket`, dan `komparasi/[kategoriId]` tidak diubah. Di commit kedua `/acara/{id}` mendapat `not-found.tsx` sendiri (lihat nomor 7), jadi halaman root hanya untuk URL yang tidak cocok dengan route mana pun.
 2. **Filter Tugas belum sesuai PRD.** `/tugas` sekarang punya filter PIC, Acara, Vendor, dan Status (`?pic=&acara=&vendor=&status=`). Id Acara dan Vendor dicek dengan `adalahUuid()`, nilai lain diabaikan. Keduanya ikut dihitung di `adaFilter`, jadi tampilan kosong menawarkan "Hapus filter". Pilihan Acara diurutkan per tanggal lalu nama, Vendor per nama, sama dengan form Tugas. Class `.filter-dua` diganti `.filter-empat`: satu kolom di bawah 560px, dua kolom di atasnya dengan "Terapkan" di baris sendiri. Test baru di `tugas.spec.ts`: "filter vendor..." dan "filter acara...".
 3. **E2E Pembayaran Terjadwal di kelompok Terlambat.** `dashboard.spec.ts` menambah kasus Pelunasan dengan Jatuh Tempo kemarin (tanggal Jakarta). Helper `pelunasanHariIni()` diganti `pelunasanTerjadwal(geserHari = 0)`, hitungan dasar dan pembersihan memakai cara yang sudah ada.
 4. **Tap target link alamat web vendor.** Diberi `tautan-aksi` di `vendor/[id]/page.tsx`.
 
-### Perbaikan kecil di commit ini
+Diperbaiki di commit "fix: pindahkan proxy ke src dan rapikan panduan deploy", juga hanya dicek sintaksnya:
+
+5. **Refresh sesi tidak pernah berjalan.** `middleware.ts` ada di root, padahal aplikasi memakai `src/app`. Next.js hanya membaca file middleware atau proxy di `src/` kalau folder `src` dipakai, jadi file itu diabaikan dan token Supabase tidak di-refresh di setiap request. Server Component tidak bisa menulis cookie, jadi sesi kemungkinan besar putus setelah access token kedaluwarsa (bawaan 1 jam). Dipindah dengan `git mv` ke `src/proxy.ts`, fungsi diganti nama menjadi `proxy` sesuai konvensi Next.js 16 (runtime Node.js), `config.matcher` dan perilakunya sama, tetap memanggil `updateSession()` dari `src/lib/supabase/middleware.ts`. `docs/deploy.md` langkah 10 menambah cek "tetap login lebih dari 1 jam". Komentar di `src/lib/supabase/server.ts` dan struktur file di `docs/plans/fase-1.md` ikut diperbarui.
+6. **Kontras placeholder bergantung browser.** `globals.css` sekarang punya `::placeholder { color: var(--teks-lembut); opacity: 1; }`. `opacity: 1` menimpa opacity bawaan Firefox. Rasio 10.10:1 di atas `#fff`, sama di semua browser. Tampilan di Safari dan Firefox, dan apakah placeholder masih terlihat berbeda dari isian asli (`--teks`), BELUM DIVERIFIKASI.
+7. **`/acara/{id}` tidak ada.** Ditambah `(app)/acara/[id]/not-found.tsx` yang sama dengan versi Vendor: judul "Acara tidak ditemukan", "Acara ini tidak ada atau sudah dihapus.", dan `tautan-aksi` "Kembali ke daftar acara" ke `/acara`. Navigasi bawah tetap tampil.
+8. **Judul tab halaman 404.** `src/app/not-found.tsx` mengekspor `metadata` dengan judul "Halaman tidak ditemukan | Rendy & Dinar". Ditulis lengkap karena layout root memakai judul biasa tanpa template.
+9. **Angka kontras tombol nonaktif.** Dihitung ulang: `.tombol-utama:disabled` 4.88 (sebelumnya tertulis 4.87) dan `.tombol-bahaya:disabled` 4.46 (sebelumnya 4.45). Kesimpulannya tidak berubah.
+10. **Panduan deploy.** Urutan `docs/deploy.md` diubah: project Vercel dibuat dulu untuk mendapat domain (langkah 3), lalu link, `db push`, dan link kembali ke dev (langkah 4), data Editor dan cek Storage (5 dan 6), Google OAuth (7), URL Auth Supabase (8), lalu env dan deploy ulang (9). Catatan "pastikan langkah 3 dan 4 memakai domain yang sama" dihapus karena domain sudah pasti sejak awal. Penjelasan Redirect URL yang hilang dikoreksi: pengguna kembali ke `/login` tanpa pesan apa pun, bukan "Gagal masuk. Coba lagi."
+
+### Perbaikan kecil di commit Task 14 (`5155149`)
 
 - `SeksiKontrak.tsx`: "tahap Survei/Nego" menjadi "status vendor menjadi Survei/Nego", dan "halaman Bandingkan" menjadi "halaman Komparasi".
 - `kontrak/actions.ts`: pesan galat "di tahap Survei/Nego atau Booked" menjadi "berstatus Survei/Nego atau Booked".
@@ -290,11 +303,11 @@ Perbaikan ini belum dicek di browser dan belum diuji. Semuanya ikut dicek di tab
 
 - **`src/lib/database.types.ts` sempat diedit tangan dan sudah tertinggal.** Commit terakhir yang mengubahnya `5e311f7`, sedangkan migration masih diubah sesudahnya di `bf9ae6a` (`0004`), `957ce5e` dan `1279d4f` (`0005`), serta `e483b9a` (`0001`, `0002`). Wajib generate ulang sebelum deploy.
 - **Klien Supabase tanpa generic `Database`.** `src/lib/supabase/server.ts` dan `browser.ts` memanggil `createServerClient(...)` dan `createBrowserClient(...)` tanpa `<Database>`, jadi hampir semua query di aplikasi tidak dicek tipe (hasilnya `any`). Hanya `src/lib/supabase/anon.ts` yang memakai `Database`. Saran: tambahkan `createServerClient<Database>(...)` dan `createBrowserClient<Database>(...)` setelah types digenerate ulang, lalu perbaiki semua yang dilaporkan `npx tsc --noEmit`. Kemungkinan besar akan ada error baru, misalnya di embed relasi dan kolom view yang nullable.
-- **Migration diubah di tempat.** `0001` sampai `0005` diubah beberapa kali setelah pertama dibuat. Project dev harus di-`db reset --linked` supaya skemanya sama persis dengan file. Setelah deploy pertama, perubahan hanya lewat migration baru (`docs/deploy.md` langkah 10).
+- **Migration diubah di tempat.** `0001` sampai `0005` diubah beberapa kali setelah pertama dibuat. Project dev harus di-`db reset --linked` supaya skemanya sama persis dengan file. Setelah deploy pertama, perubahan hanya lewat migration baru (`docs/deploy.md` langkah 11).
 - **`db reset --linked` setelah link ke produksi akan menghapus data asli.** `docs/deploy.md` meminta link kembali ke dev setelah `db push` dan mengecek `supabase/.temp/project-ref`.
 - **Env Preview di Vercel.** Kalau key produksi juga diisi untuk Preview, branch preview menulis ke data asli. `docs/deploy.md` meminta env hanya untuk Production.
 - **`SUPABASE_SERVICE_ROLE_KEY` tidak dibutuhkan di produksi.** Di kode aplikasi key ini hanya dibaca `src/app/api/dev-login/route.ts`, yang sudah 404 di produksi (`NODE_ENV === 'production'`) sebelum key dipakai. Pemakaian lain hanya di `tests/db/helpers.ts`.
 - **PWA belum punya ikon.** `manifest.webmanifest` sengaja tanpa ikon (plan Task 1, menunggu keputusan logo, R-23). Chrome Android biasanya baru menawarkan install kalau manifest punya ikon, jadi "PWA yang bisa di-install" perlu dicek di HP.
-- **`middleware.ts` di Next.js 16.** Next.js 16 memperkenalkan nama file `proxy.ts` sebagai pengganti `middleware.ts`. Kemungkinan `npm run build` menampilkan peringatan deprecation. Belum dicek karena build tidak bisa dijalankan di sini.
+- **Proxy baru dipindah, belum pernah berjalan.** Selama Fase 1 refresh sesi tidak pernah aktif (lihat nomor 5 di atas), jadi semua test e2e sejauh ini lolos tanpa proxy. Setelah pindah ke `src/proxy.ts`, setiap request (kecuali aset statis di matcher) memanggil `supabase.auth.getUser()`. Jalankan ulang semua test e2e dan `npm run build` (pastikan output build menyebut Proxy), lalu cek langkah 10 nomor 9 di `docs/deploy.md`.
 - **Link "Atur Komponen" di form Paket** membuka halaman lain, jadi isian Paket yang belum disimpan hilang.
 - **Commit `4c8e934` bernama "initial commit"** di tengah riwayat dan tidak mengikuti format Conventional Commits. Hanya catatan.

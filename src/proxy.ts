@@ -1,7 +1,8 @@
 import type { NextRequest } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware';
 
-export async function middleware(request: NextRequest) {
+// Next.js 16: file proxy (dulu middleware) harus di src/, sejajar dengan app/, supaya dijalankan.
+export async function proxy(request: NextRequest) {
   return updateSession(request);
 }
 

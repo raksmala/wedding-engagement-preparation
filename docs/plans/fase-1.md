@@ -90,7 +90,7 @@ src/
     rupiah.ts
     tanggal.ts
     whatsapp.ts
-middleware.ts
+  proxy.ts                  refresh sesi tiap request (Next.js 16, dulu middleware.ts di root)
 tests/
   unit/                     Vitest, logika murni
   db/                       Vitest, terhadap Supabase lokal
@@ -185,7 +185,7 @@ expect(linkWhatsApp('12345')).toBeNull();
 
 **Files:**
 - Create: `supabase/migrations/0001_dasar.sql`, `supabase/seed.sql`
-- Create: `src/lib/supabase/server.ts`, `src/lib/supabase/browser.ts`, `src/lib/supabase/middleware.ts`, `middleware.ts`
+- Create: `src/lib/supabase/server.ts`, `src/lib/supabase/browser.ts`, `src/lib/supabase/middleware.ts`, `src/proxy.ts` (awalnya `middleware.ts` di root, dipindah karena tidak terbaca)
 - Create: `src/app/login/page.tsx` (ganti versi Task 1), `src/app/auth/callback/route.ts`, `src/app/api/dev-login/route.ts`, `src/app/(app)/layout.tsx`, `src/app/(app)/page.tsx` (placeholder dashboard)
 - Create: `tests/db/helpers.ts`
 - Test: `tests/db/akses.test.ts`, `tests/e2e/login.spec.ts`

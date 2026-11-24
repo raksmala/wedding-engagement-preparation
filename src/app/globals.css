@@ -158,6 +158,13 @@ a.tombol-utama {
   font-weight: 600;
 }
 
+/* Warna placeholder diatur supaya tidak bergantung browser (bawaan WebKit dan Firefox di bawah 4.5:1).
+   opacity: 1 menimpa opacity bawaan Firefox. */
+::placeholder {
+  color: var(--teks-lembut);
+  opacity: 1;
+}
+
 .form input,
 .form select,
 .form textarea {

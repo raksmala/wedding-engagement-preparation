@@ -142,7 +142,7 @@ Tebal huruf: `600` untuk label form, tombol, status, dan judul. `700` untuk item
 | `width: min(92vw, 420px)` | `.dialog` | Di 375px dialog menyisakan tepi, di laptop tidak melebar |
 | `min-width: 12rem` | `.menu-lainnya` | Label menu terpanjang ("Share Link", "Pengaturan") muat dalam satu baris |
 | Grid 5 kolom sama lebar | Navigasi bawah | Empat halaman utama ditambah Lainnya |
-| Breakpoint `560px` | Filter Vendor, Tugas, dan pilih kategori menjadi satu baris | Di bawah 560px filter ditumpuk supaya tidak ada scroll horizontal |
+| Breakpoint `560px` | Filter Vendor dan pilih kategori menjadi satu baris. Filter Tugas (`.filter-empat`: PIC, Acara, Vendor, Status) menjadi dua kolom, dengan "Terapkan" di baris sendiri rata kiri | Di bawah 560px filter ditumpuk satu kolom supaya tidak ada scroll horizontal. Empat pilihan plus tombol terlalu sempit dalam satu baris 720px |
 | Breakpoint `359px` | Ukuran huruf navigasi bawah | Lihat ukuran huruf |
 | Sel `min-width: 11rem`, kolom label `6.5rem` menempel (`position: sticky`) | Tabel Komparasi di dalam `.tabel-geser` (`overflow-x: auto`) | Hanya tabel yang bisa digeser, halaman tidak ikut melebar, dan nama Komponen tetap terlihat |
 | `z-index: 10` dan `1` | Navigasi bawah dan kolom label yang menempel | Hanya dua lapisan |
@@ -173,11 +173,11 @@ Dihitung dengan rumus luminans relatif WCAG 2.x (script node kecil, 24 November 
 | `--primary` | `--surface` | 5.75:1 | Lolos | Saat ini tidak dipakai untuk teks. Garis fokus di kolom terpilih |
 | `--accent` | `--surface` | 3.36:1 | Gagal untuk teks normal | Tidak dipakai: ditimpa `.kolom-dipilih .status-label`. Jangan dipakai |
 | `--teks` | `#fff` | 15.33:1 | Lolos | Isian form |
-| `--teks-lembut` | `#fff` | 10.10:1 | Lolos | Belum dipakai |
+| `--teks-lembut` | `#fff` | 10.10:1 | Lolos | Placeholder isian (`::placeholder`, `opacity: 1`) |
 | `--primary` | `#fff` | 10.11:1 | Lolos | Belum dipakai |
 | `#fff` | `--primary` | 10.11:1 | Lolos | Teks `.tombol-utama` |
-| `#fff` 70% | `--primary` 70% di atas `--bg` | 4.87:1 | Lolos | `.tombol-utama:disabled` |
-| `--primary` 70% | `--bg` | 4.45:1 | Di bawah 4.5:1 | `.tombol-bahaya:disabled`. Kontrol nonaktif dikecualikan WCAG 1.4.3 |
+| `#fff` 70% | `--primary` 70% di atas `--bg` | 4.88:1 | Lolos | `.tombol-utama:disabled` |
+| `--primary` 70% | `--bg` | 4.46:1 | Di bawah 4.5:1 | `.tombol-bahaya:disabled`. Kontrol nonaktif dikecualikan WCAG 1.4.3 |
 | `--teks` 70% | `--bg` | 5.37:1 | Lolos | `.tombol-sekunder:disabled` |
 | `--garis` | `--bg` | 3.58:1 | Lolos (UI) | Border kartu, tombol sekunder, garis navigasi |
 | `--garis` | `#fff` | 4.07:1 | Lolos (UI) | Border isian form |
@@ -186,10 +186,10 @@ Dihitung dengan rumus luminans relatif WCAG 2.x (script node kecil, 24 November 
 | `--primary` | `--bg` | 8.90:1 | Lolos (UI) | Garis fokus, bingkai Terlambat, bingkai dialog |
 | `--accent` | `--bg` | 5.20:1 | Lolos (UI) | Bingkai `.pesan-berhasil` |
 | `--primary` | backdrop dialog | 2.95:1 | Di bawah 3:1 | Bingkai luar dialog di atas backdrop. Tepi dialog tetap terlihat dari latar dialog terhadap backdrop (3.01:1) |
-| Placeholder bawaan Chromium `#757575` | `#fff` | 4.61:1 | Lolos | Placeholder isian (warna tidak diatur di CSS) |
-| Placeholder bawaan WebKit `darkGray` `#a9a9a9` | `#fff` | 2.35:1 | Gagal | Placeholder di Safari, kalau browser memakai nilai ini |
-| Placeholder bawaan Firefox (teks 54%) | `#fff` | 3.49:1 | Gagal | Placeholder di Firefox |
+| Placeholder bawaan Chromium `#757575` | `#fff` | 4.61:1 | Lolos | Tidak dipakai lagi, ditimpa `::placeholder` |
+| Placeholder bawaan WebKit `darkGray` `#a9a9a9` | `#fff` | 2.35:1 | Gagal | Tidak dipakai lagi, ditimpa `::placeholder` |
+| Placeholder bawaan Firefox (teks 54%) | `#fff` | 3.49:1 | Gagal | Tidak dipakai lagi, ditimpa `::placeholder` dengan `opacity: 1` |
 
 Catatan:
-- Warna placeholder belum diatur di `globals.css`, jadi hasilnya bergantung pada browser. Kalau mau diatur, perlu satu warna netral baru yang lebih terang dari `--teks-lembut` tetapi tetap 4.5:1 di atas `#fff`, misalnya `#6b5e60` (6.19:1 di atas `#fff`). Ini keputusan desain yang belum diambil.
+- Placeholder memakai `--teks-lembut` (10.10:1 di atas `#fff`) dengan `opacity: 1`, sama di semua browser. Bedanya dengan isian asli (`--teks`, 15.33:1) hanya selisih gelap terang, jadi teks placeholder sebaiknya tetap diawali "Contoh:". Tampilannya di Safari dan Firefox belum dicek.
 - `--garis` (3.58:1) tidak boleh dipakai untuk teks.

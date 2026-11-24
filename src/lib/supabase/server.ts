@@ -17,7 +17,7 @@ export async function createClient() {
               cookieStore.set(name, value, options),
             );
           } catch {
-            // Dipanggil dari Server Component: sesi di-refresh oleh middleware.
+            // Dipanggil dari Server Component: sesi di-refresh oleh src/proxy.ts.
           }
         },
       },
