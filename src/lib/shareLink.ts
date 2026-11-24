@@ -44,7 +44,7 @@ export type IsiShareLink = {
   vendor?: { nama: string; kategori: string; status: StatusVendor; acara: string[] }[];
   tugas?: { judul: string; pic: string; jatuh_tempo: string | null; status: StatusTugas }[];
   keuangan?: {
-    vendor: { nama: string; total: number; terbayar: number; sisa: number }[];
+    vendor: { nama: string; status: StatusVendor; total: number; terbayar: number; sisa: number }[];
     kontribusi: { nama: string; total: number }[];
   };
 };

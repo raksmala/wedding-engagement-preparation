@@ -217,6 +217,7 @@ describe('baca_share_link', () => {
       total: RAHASIA.harga,
       terbayar: TERBAYAR,
       sisa: RAHASIA.harga - TERBAYAR,
+      status: 'booked',
     });
     const rendy = data.keuangan.kontribusi.find((k: { nama: string }) => k.nama === 'Rendy');
     expect(rendy.total).toBeGreaterThanOrEqual(TERBAYAR);
@@ -285,7 +286,7 @@ describe('baca_share_link', () => {
     for (const t of data.tugas) expect(kunci(t)).toEqual(['jatuh_tempo', 'judul', 'pic', 'status']);
     expect(kunci(data.keuangan)).toEqual(['kontribusi', 'vendor']);
     expect(data.keuangan.vendor.length).toBeGreaterThan(0);
-    for (const v of data.keuangan.vendor) expect(kunci(v)).toEqual(['nama', 'sisa', 'terbayar', 'total']);
+    for (const v of data.keuangan.vendor) expect(kunci(v)).toEqual(['nama', 'sisa', 'status', 'terbayar', 'total']);
     expect(data.keuangan.kontribusi.length).toBeGreaterThan(0);
     for (const k of data.keuangan.kontribusi) expect(kunci(k)).toEqual(['nama', 'total']);
 
@@ -326,6 +327,7 @@ describe('baca_share_link', () => {
       total: HARGA_BATAL,
       terbayar: TERBAYAR_BATAL,
       sisa: HARGA_BATAL - TERBAYAR_BATAL,
+      status: 'batal',
     });
     expect(namaKeuangan).not.toContain('Uji Share Batal Tanpa Bayar');
     expect(namaKeuangan).not.toContain('Uji Share Batal');

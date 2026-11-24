@@ -86,7 +86,7 @@ grant execute on function bagian_share_link_valid(text[]) to authenticated, serv
 --   acara: [{nama, tanggal, perkiraan, lokasi}]
 --   vendor: [{nama, kategori, status, acara: [nama acara]}]
 --   tugas: [{judul, pic, jatuh_tempo, status}]
---   keuangan: {vendor: [{nama, total, terbayar, sisa}], kontribusi: [{nama, total}]}
+--   keuangan: {vendor: [{nama, status, total, terbayar, sisa}], kontribusi: [{nama, total}]}
 -- Kunci total, terbayar, dan sisa hanya muncul di dalam keuangan.
 --
 -- Vendor berstatus batal tidak ditampilkan di bagian vendor, karena tidak lagi dipakai.
@@ -178,7 +178,9 @@ begin
             'nama', v.nama,
             'total', r.total,
             'terbayar', r.terbayar,
-            'sisa', r.sisa
+            'sisa', r.sisa,
+            -- Supaya Pembaca melihat Vendor batal sebagai Batal, bukan sebagai tagihan yang belum lunas.
+            'status', v.status
           )
           order by v.nama
         )

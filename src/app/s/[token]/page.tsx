@@ -134,7 +134,8 @@ function SeksiKeuangan({ keuangan }: { keuangan: Keuangan }) {
               <li key={i} className="kartu">
                 <p className="baris-judul">
                   <strong>{v.nama}</strong>
-                  <StatusLabel status={sisa <= 0 ? 'lunas' : 'belum_lunas'} />
+                  {/* Vendor batal tidak akan dilunasi, jadi statusnya Batal, bukan Lunas atau Belum lunas. */}
+                  <StatusLabel status={v.status === 'batal' ? 'batal' : sisa <= 0 ? 'lunas' : 'belum_lunas'} />
                 </p>
                 {sisa < 0 && (
                   <p className="kelebihan">
