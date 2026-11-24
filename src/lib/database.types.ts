@@ -96,6 +96,78 @@ export type Database = {
           },
         ]
       }
+      alokasi_acara: {
+        Row: {
+          acara_id: string
+          catatan: string | null
+          dibuat_oleh: string | null
+          dibuat_pada: string
+          diubah_oleh: string | null
+          diubah_pada: string
+          id: string
+          kontrak_id: string
+          nominal: number
+        }
+        Insert: {
+          acara_id: string
+          catatan?: string | null
+          dibuat_oleh?: string | null
+          dibuat_pada?: string
+          diubah_oleh?: string | null
+          diubah_pada?: string
+          id?: string
+          kontrak_id: string
+          nominal: number
+        }
+        Update: {
+          acara_id?: string
+          catatan?: string | null
+          dibuat_oleh?: string | null
+          dibuat_pada?: string
+          diubah_oleh?: string | null
+          diubah_pada?: string
+          id?: string
+          kontrak_id?: string
+          nominal?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alokasi_acara_acara_id_fkey"
+            columns: ["acara_id"]
+            isOneToOne: false
+            referencedRelation: "acara"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alokasi_acara_dibuat_oleh_fkey"
+            columns: ["dibuat_oleh"]
+            isOneToOne: false
+            referencedRelation: "editor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alokasi_acara_diubah_oleh_fkey"
+            columns: ["diubah_oleh"]
+            isOneToOne: false
+            referencedRelation: "editor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alokasi_acara_kontrak_id_fkey"
+            columns: ["kontrak_id"]
+            isOneToOne: false
+            referencedRelation: "kontrak"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alokasi_acara_kontrak_id_fkey"
+            columns: ["kontrak_id"]
+            isOneToOne: false
+            referencedRelation: "ringkasan_kontrak"
+            referencedColumns: ["kontrak_id"]
+          },
+        ]
+      }
       editor: {
         Row: {
           auth_user_id: string
@@ -144,6 +216,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "editor"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "editor_pihak_id_fkey"
+            columns: ["pihak_id"]
+            isOneToOne: false
+            referencedRelation: "kontribusi_pihak"
+            referencedColumns: ["pihak_id"]
+          },
+          {
+            foreignKeyName: "editor_pihak_id_fkey"
+            columns: ["pihak_id"]
+            isOneToOne: false
+            referencedRelation: "kontribusi_pihak_vendor"
+            referencedColumns: ["pihak_id"]
           },
           {
             foreignKeyName: "editor_pihak_id_fkey"
@@ -271,6 +357,74 @@ export type Database = {
             columns: ["kategori_vendor_id"]
             isOneToOne: false
             referencedRelation: "kategori_vendor"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kontrak: {
+        Row: {
+          catatan: string | null
+          dibuat_oleh: string | null
+          dibuat_pada: string
+          diubah_oleh: string | null
+          diubah_pada: string
+          id: string
+          lampiran: string[]
+          paket_id: string | null
+          tanggal_kesepakatan: string | null
+          vendor_id: string
+        }
+        Insert: {
+          catatan?: string | null
+          dibuat_oleh?: string | null
+          dibuat_pada?: string
+          diubah_oleh?: string | null
+          diubah_pada?: string
+          id?: string
+          lampiran?: string[]
+          paket_id?: string | null
+          tanggal_kesepakatan?: string | null
+          vendor_id: string
+        }
+        Update: {
+          catatan?: string | null
+          dibuat_oleh?: string | null
+          dibuat_pada?: string
+          diubah_oleh?: string | null
+          diubah_pada?: string
+          id?: string
+          lampiran?: string[]
+          paket_id?: string | null
+          tanggal_kesepakatan?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kontrak_dibuat_oleh_fkey"
+            columns: ["dibuat_oleh"]
+            isOneToOne: false
+            referencedRelation: "editor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kontrak_diubah_oleh_fkey"
+            columns: ["diubah_oleh"]
+            isOneToOne: false
+            referencedRelation: "editor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kontrak_paket_id_fkey"
+            columns: ["paket_id"]
+            isOneToOne: false
+            referencedRelation: "paket"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kontrak_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: true
+            referencedRelation: "vendor"
             referencedColumns: ["id"]
           },
         ]
@@ -462,6 +616,107 @@ export type Database = {
           },
         ]
       }
+      pembayaran: {
+        Row: {
+          bukti: string[]
+          catatan: string | null
+          dibuat_oleh: string | null
+          dibuat_pada: string
+          diubah_oleh: string | null
+          diubah_pada: string
+          id: string
+          jatuh_tempo: string | null
+          jenis: Database["public"]["Enums"]["jenis_pembayaran"]
+          kontrak_id: string
+          nominal: number
+          pihak_id: string | null
+          status: Database["public"]["Enums"]["status_pembayaran"]
+          tanggal_bayar: string | null
+        }
+        Insert: {
+          bukti?: string[]
+          catatan?: string | null
+          dibuat_oleh?: string | null
+          dibuat_pada?: string
+          diubah_oleh?: string | null
+          diubah_pada?: string
+          id?: string
+          jatuh_tempo?: string | null
+          jenis: Database["public"]["Enums"]["jenis_pembayaran"]
+          kontrak_id: string
+          nominal: number
+          pihak_id?: string | null
+          status: Database["public"]["Enums"]["status_pembayaran"]
+          tanggal_bayar?: string | null
+        }
+        Update: {
+          bukti?: string[]
+          catatan?: string | null
+          dibuat_oleh?: string | null
+          dibuat_pada?: string
+          diubah_oleh?: string | null
+          diubah_pada?: string
+          id?: string
+          jatuh_tempo?: string | null
+          jenis?: Database["public"]["Enums"]["jenis_pembayaran"]
+          kontrak_id?: string
+          nominal?: number
+          pihak_id?: string | null
+          status?: Database["public"]["Enums"]["status_pembayaran"]
+          tanggal_bayar?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pembayaran_dibuat_oleh_fkey"
+            columns: ["dibuat_oleh"]
+            isOneToOne: false
+            referencedRelation: "editor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pembayaran_diubah_oleh_fkey"
+            columns: ["diubah_oleh"]
+            isOneToOne: false
+            referencedRelation: "editor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pembayaran_kontrak_id_fkey"
+            columns: ["kontrak_id"]
+            isOneToOne: false
+            referencedRelation: "kontrak"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pembayaran_kontrak_id_fkey"
+            columns: ["kontrak_id"]
+            isOneToOne: false
+            referencedRelation: "ringkasan_kontrak"
+            referencedColumns: ["kontrak_id"]
+          },
+          {
+            foreignKeyName: "pembayaran_pihak_id_fkey"
+            columns: ["pihak_id"]
+            isOneToOne: false
+            referencedRelation: "kontribusi_pihak"
+            referencedColumns: ["pihak_id"]
+          },
+          {
+            foreignKeyName: "pembayaran_pihak_id_fkey"
+            columns: ["pihak_id"]
+            isOneToOne: false
+            referencedRelation: "kontribusi_pihak_vendor"
+            referencedColumns: ["pihak_id"]
+          },
+          {
+            foreignKeyName: "pembayaran_pihak_id_fkey"
+            columns: ["pihak_id"]
+            isOneToOne: false
+            referencedRelation: "pihak"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pihak: {
         Row: {
           arsip: boolean
@@ -638,12 +893,58 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      kontribusi_pihak: {
+        Row: {
+          nama: string | null
+          pihak_id: string | null
+          total: number | null
+        }
+        Relationships: []
+      }
+      kontribusi_pihak_vendor: {
+        Row: {
+          pihak_id: string | null
+          total: number | null
+          vendor_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kontrak_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: true
+            referencedRelation: "vendor"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ringkasan_kontrak: {
+        Row: {
+          kontrak_id: string | null
+          lunas: boolean | null
+          sisa: number | null
+          terbayar: number | null
+          total: number | null
+          vendor_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kontrak_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: true
+            referencedRelation: "vendor"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       editor_saat_ini: { Args: never; Returns: string }
       is_editor: { Args: never; Returns: boolean }
       pastikan_editor: { Args: never; Returns: string }
+      pilih_paket: {
+        Args: { p_alokasi?: Json; p_paket_id: string }
+        Returns: string
+      }
       simpan_paket: {
         Args: { p_data: Json; p_id: string; p_nilai: Json; p_vendor_id: string }
         Returns: string
@@ -659,8 +960,10 @@ export type Database = {
     }
     Enums: {
       jenis_acara: "lamaran" | "akad" | "resepsi" | "ngunduh_mantu" | "lainnya"
+      jenis_pembayaran: "dp" | "termin" | "pelunasan"
       saluran_kontak: "whatsapp" | "telepon" | "bertemu" | "email" | "lainnya"
       status_paket: "aktif" | "dipilih" | "tidak_dipilih"
+      status_pembayaran: "terjadwal" | "dibayar"
       status_vendor: "kandidat" | "survei_nego" | "booked" | "selesai" | "batal"
       tipe_komponen: "teks" | "angka" | "ya_tidak"
     }
@@ -794,8 +1097,10 @@ export const Constants = {
   public: {
     Enums: {
       jenis_acara: ["lamaran", "akad", "resepsi", "ngunduh_mantu", "lainnya"],
+      jenis_pembayaran: ["dp", "termin", "pelunasan"],
       saluran_kontak: ["whatsapp", "telepon", "bertemu", "email", "lainnya"],
       status_paket: ["aktif", "dipilih", "tidak_dipilih"],
+      status_pembayaran: ["terjadwal", "dibayar"],
       status_vendor: ["kandidat", "survei_nego", "booked", "selesai", "batal"],
       tipe_komponen: ["teks", "angka", "ya_tidak"],
     },
