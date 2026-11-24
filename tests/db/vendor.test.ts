@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { bersihkanTest, buatEditorTest, buatOrangLuar } from './helpers';
+import { admin, bersihkanTest, buatEditorTest, buatOrangLuar } from './helpers';
 
 const KATEGORI = [
   'Venue',
@@ -135,5 +135,69 @@ describe('vendor', () => {
     await editor.from('vendor').delete().eq('id', v!.id);
     const { data } = await editor.from('log_kontak').select('id').eq('vendor_id', v!.id);
     expect(data).toEqual([]);
+  });
+});
+
+describe('simpan_vendor', () => {
+  const NOL = '00000000-0000-0000-0000-000000000000';
+
+  async function idAcara(nama: string): Promise<string> {
+    const { data } = await editor.from('acara').select('id').eq('nama', nama).single();
+    return data!.id;
+  }
+  async function dataVendor(nama: string) {
+    return { nama, kategori_vendor_id: await idKategori('Venue') };
+  }
+  async function linkAcara(vendorId: string): Promise<string[]> {
+    const { data } = await editor.from('vendor_acara').select('acara_id').eq('vendor_id', vendorId);
+    return (data ?? []).map((r) => r.acara_id).sort();
+  }
+
+  test('vendor baru dengan acara tidak valid gagal dan tidak meninggalkan vendor', async () => {
+    const { error } = await editor.rpc('simpan_vendor', {
+      p_id: null,
+      p_data: await dataVendor('Vendor Uji Atomik'),
+      p_acara_ids: [await idAcara('Lamaran'), NOL],
+    });
+    expect(error).not.toBeNull();
+    const { data } = await admin.from('vendor').select('id').eq('nama', 'Vendor Uji Atomik');
+    expect(data).toEqual([]);
+  });
+
+  test('ubah relasi dari Lamaran ke Resepsi menyisakan Resepsi saja', async () => {
+    const lamaran = await idAcara('Lamaran');
+    const resepsi = await idAcara('Resepsi');
+    const { data: id, error } = await editor.rpc('simpan_vendor', {
+      p_id: null,
+      p_data: await dataVendor('Vendor Uji Ganti'),
+      p_acara_ids: [lamaran],
+    });
+    expect(error).toBeNull();
+    expect(await linkAcara(id as string)).toEqual([lamaran]);
+    const { error: e2 } = await editor.rpc('simpan_vendor', {
+      p_id: id,
+      p_data: await dataVendor('Vendor Uji Ganti'),
+      p_acara_ids: [resepsi],
+    });
+    expect(e2).toBeNull();
+    expect(await linkAcara(id as string)).toEqual([resepsi]);
+  });
+
+  test('ubah dengan acara tidak valid gagal dan relasi lama utuh', async () => {
+    const lamaran = await idAcara('Lamaran');
+    const { data: id } = await editor.rpc('simpan_vendor', {
+      p_id: null,
+      p_data: await dataVendor('Vendor Uji Utuh'),
+      p_acara_ids: [lamaran],
+    });
+    const { error } = await editor.rpc('simpan_vendor', {
+      p_id: id,
+      p_data: await dataVendor('Vendor Uji Utuh Baru'),
+      p_acara_ids: [NOL],
+    });
+    expect(error).not.toBeNull();
+    expect(await linkAcara(id as string)).toEqual([lamaran]);
+    const { data: v } = await editor.from('vendor').select('nama').eq('id', id as string).single();
+    expect(v?.nama).toBe('Vendor Uji Utuh');
   });
 });

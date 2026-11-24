@@ -87,3 +87,55 @@ insert into kategori_vendor (nama, urutan) values
   ('Venue', 1), ('Katering', 2), ('Dekorasi', 3), ('MUA', 4), ('Busana', 5),
   ('Foto & Video', 6), ('WO/MC', 7), ('Hiburan', 8), ('Undangan', 9), ('Souvenir', 10),
   ('Cincin', 11), ('Hias Seserahan', 12), ('Lainnya', 13);
+
+-- Simpan Vendor beserta relasi Acara dalam satu transaksi.
+-- security invoker: RLS dan trigger audit tetap berlaku. Gagal di mana pun berarti tidak ada yang tertulis.
+create function simpan_vendor(p_id uuid, p_data jsonb, p_acara_ids uuid[])
+returns uuid
+language plpgsql security invoker set search_path = public
+as $$
+declare
+  v_id uuid;
+begin
+  if p_id is null then
+    insert into vendor (nama, kategori_vendor_id, nama_kontak, whatsapp, instagram, link, catatan)
+    values (
+      p_data ->> 'nama',
+      (p_data ->> 'kategori_vendor_id')::uuid,
+      p_data ->> 'nama_kontak',
+      p_data ->> 'whatsapp',
+      p_data ->> 'instagram',
+      p_data ->> 'link',
+      p_data ->> 'catatan'
+    )
+    returning id into v_id;
+  else
+    update vendor set
+      nama = p_data ->> 'nama',
+      kategori_vendor_id = (p_data ->> 'kategori_vendor_id')::uuid,
+      nama_kontak = p_data ->> 'nama_kontak',
+      whatsapp = p_data ->> 'whatsapp',
+      instagram = p_data ->> 'instagram',
+      link = p_data ->> 'link',
+      catatan = p_data ->> 'catatan'
+    where id = p_id
+    returning id into v_id;
+    if v_id is null then
+      raise exception 'vendor_tidak_ditemukan';
+    end if;
+  end if;
+
+  -- Tambah relasi baru dulu, lalu lepas yang tidak dipilih lagi.
+  insert into vendor_acara (vendor_id, acara_id)
+  select v_id, a from (select distinct unnest(coalesce(p_acara_ids, '{}')) as a) x
+  on conflict do nothing;
+
+  delete from vendor_acara
+  where vendor_id = v_id and not (acara_id = any (coalesce(p_acara_ids, '{}')));
+
+  return v_id;
+end;
+$$;
+
+revoke all on function simpan_vendor(uuid, jsonb, uuid[]) from public, anon;
+grant execute on function simpan_vendor(uuid, jsonb, uuid[]) to authenticated;

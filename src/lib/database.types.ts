@@ -454,6 +454,10 @@ export type Database = {
       editor_saat_ini: { Args: never; Returns: string }
       is_editor: { Args: never; Returns: boolean }
       pastikan_editor: { Args: never; Returns: string }
+      simpan_vendor: {
+        Args: { p_acara_ids: string[]; p_data: Json; p_id: string }
+        Returns: string
+      }
     }
     Enums: {
       jenis_acara: "lamaran" | "akad" | "resepsi" | "ngunduh_mantu" | "lainnya"
