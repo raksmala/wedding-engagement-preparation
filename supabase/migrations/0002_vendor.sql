@@ -315,3 +315,33 @@ $$;
 
 revoke all on function simpan_paket(uuid, uuid, jsonb, jsonb), urutkan_komponen(uuid, uuid[]) from public, anon;
 grant execute on function simpan_paket(uuid, uuid, jsonb, jsonb), urutkan_komponen(uuid, uuid[]) to authenticated;
+
+-- Paket tidak pernah pindah Vendor dan Komponen tidak pernah pindah kategori.
+-- Ini menjaga aturan komponen_beda_kategori dari update langsung ke tabel.
+create function tolak_paket_pindah_vendor() returns trigger
+language plpgsql security invoker set search_path = public
+as $$
+begin
+  if new.vendor_id <> old.vendor_id then
+    raise exception 'paket_pindah_vendor';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger paket_pindah_vendor before update of vendor_id on paket
+  for each row execute function tolak_paket_pindah_vendor();
+
+create function tolak_komponen_pindah_kategori() returns trigger
+language plpgsql security invoker set search_path = public
+as $$
+begin
+  if new.kategori_vendor_id <> old.kategori_vendor_id then
+    raise exception 'komponen_pindah_kategori';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger komponen_pindah_kategori before update of kategori_vendor_id on komponen
+  for each row execute function tolak_komponen_pindah_kategori();

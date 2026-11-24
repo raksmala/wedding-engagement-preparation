@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { bersihkanTest, buatEditorTest, buatOrangLuar, klienAnon } from './helpers';
+import { admin, bersihkanTest, buatEditorTest, buatOrangLuar, klienAnon } from './helpers';
 
 let editor: SupabaseClient;
 let fotoId: string;
@@ -233,5 +233,32 @@ describe('komponen', () => {
     expect(eSalah?.message).toContain('komponen_tidak_ditemukan');
     const { data: tetap } = await editor.from('komponen').select('urutan').eq('id', komAlbum).single();
     expect(tetap?.urutan).toBe(1);
+  });
+});
+
+describe('kolom kunci tidak bisa dipindah', () => {
+  test('Paket tidak bisa pindah Vendor', async () => {
+    const paket = await buatPaket('Uji Pindah Vendor');
+    const { data: lain } = await editor
+      .from('vendor')
+      .insert({ nama: 'Uji Vendor Lain', kategori_vendor_id: venueId })
+      .select('id')
+      .single();
+    const { error } = await editor.from('paket').update({ vendor_id: lain!.id }).eq('id', paket);
+    expect(error?.message).toContain('paket_pindah_vendor');
+    const { data } = await admin.from('paket').select('vendor_id').eq('id', paket).single();
+    expect(data?.vendor_id).toBe(vendorId);
+    // Kolom lain tetap bisa diubah.
+    const { error: eNama } = await editor.from('paket').update({ nama: 'Uji Pindah Vendor 2', vendor_id: vendorId }).eq('id', paket);
+    expect(eNama).toBeNull();
+  });
+
+  test('Komponen tidak bisa pindah kategori', async () => {
+    const { error } = await editor.from('komponen').update({ kategori_vendor_id: venueId }).eq('id', komFoto);
+    expect(error?.message).toContain('komponen_pindah_kategori');
+    const { data } = await admin.from('komponen').select('kategori_vendor_id').eq('id', komFoto).single();
+    expect(data?.kategori_vendor_id).toBe(fotoId);
+    const { error: eNama } = await editor.from('komponen').update({ satuan: 'jam', kategori_vendor_id: fotoId }).eq('id', komFoto);
+    expect(eNama).toBeNull();
   });
 });
