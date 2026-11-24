@@ -6,10 +6,13 @@ import { createClient } from '@/lib/supabase/server';
 
 const TIDAK_DITEMUKAN = 'Data tidak ditemukan atau tidak bisa diubah.';
 
-function segarkan(tabel: string, id: string) {
-  // Task 9 menambah halaman Kontrak dan Pembayaran di sini.
-  if (tabel === 'paket') revalidatePath('/vendor/[id]', 'page');
-  void id;
+function segarkan() {
+  // Paket, Kontrak, dan Pembayaran semuanya tampil di detail Vendor.
+  revalidatePath('/vendor/[id]', 'page');
+}
+
+function dataTidakAda(pesan: string): boolean {
+  return pesan.includes('lampiran_baris_tidak_ditemukan') || pesan.includes('lampiran_tidak_ditemukan');
 }
 
 export async function tambahLampiran(tabel: string, id: string, path: string): Promise<{ error?: string }> {
@@ -22,26 +25,14 @@ export async function tambahLampiran(tabel: string, id: string, path: string): P
     return { error: 'File belum terunggah. Coba lagi.' };
   }
 
-  const { data: baris, error } = await supabase.from('paket').select('lampiran').eq('id', id).maybeSingle();
+  const { error } = await supabase.rpc('tambah_lampiran', { p_tabel: tabel, p_id: id, p_path: path });
   if (error) {
     console.error('tambahLampiran:', error.message);
+    if (dataTidakAda(error.message)) return { error: TIDAK_DITEMUKAN };
     return { error: 'Lampiran belum tersimpan. Coba lagi.' };
   }
-  if (!baris) return { error: TIDAK_DITEMUKAN };
-  if (baris.lampiran.includes(path)) return {};
 
-  const { data, error: eUbah } = await supabase
-    .from('paket')
-    .update({ lampiran: [...baris.lampiran, path] })
-    .eq('id', id)
-    .select('id');
-  if (eUbah) {
-    console.error('tambahLampiran:', eUbah.message);
-    return { error: 'Lampiran belum tersimpan. Coba lagi.' };
-  }
-  if (!data || data.length === 0) return { error: TIDAK_DITEMUKAN };
-
-  segarkan(tabel, id);
+  segarkan();
   return {};
 }
 
@@ -49,28 +40,17 @@ export async function hapusLampiran(tabel: string, id: string, path: string): Pr
   if (!pathLampiranSah(tabel, id, path)) return { error: TIDAK_DITEMUKAN };
 
   const supabase = await createClient();
-  const { data: baris, error } = await supabase.from('paket').select('lampiran').eq('id', id).maybeSingle();
+  const { error } = await supabase.rpc('hapus_lampiran', { p_tabel: tabel, p_id: id, p_path: path });
   if (error) {
     console.error('hapusLampiran:', error.message);
+    if (dataTidakAda(error.message)) return { error: TIDAK_DITEMUKAN };
     return { error: 'Lampiran belum terhapus. Coba lagi.' };
   }
-  if (!baris || !baris.lampiran.includes(path)) return { error: TIDAK_DITEMUKAN };
-
-  const { data, error: eUbah } = await supabase
-    .from('paket')
-    .update({ lampiran: baris.lampiran.filter((p: string) => p !== path) })
-    .eq('id', id)
-    .select('id');
-  if (eUbah) {
-    console.error('hapusLampiran:', eUbah.message);
-    return { error: 'Lampiran belum terhapus. Coba lagi.' };
-  }
-  if (!data || data.length === 0) return { error: TIDAK_DITEMUKAN };
 
   // Entri sudah lepas dari baris. Objek yang gagal terhapus hanya menyisakan file yatim.
   const { error: eObjek } = await supabase.storage.from(BUCKET_LAMPIRAN).remove([path]);
   if (eObjek) console.error('hapusLampiran: objek tidak terhapus', eObjek.message);
 
-  segarkan(tabel, id);
+  segarkan();
   return {};
 }

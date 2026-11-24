@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { formatTanggal, formatTanggalJamWib, hariIniJakarta, kelompokJatuhTempo } from '@/lib/tanggal';
+import { tanggalValid, formatTanggal, formatTanggalJamWib, hariIniJakarta, kelompokJatuhTempo } from '@/lib/tanggal';
 
 describe('hariIniJakarta', () => {
   test('memakai zona Asia/Jakarta', () => {
@@ -31,5 +31,20 @@ describe('formatTanggalJamWib', () => {
   });
   test('melewati tengah malam di zona Jakarta', () => {
     expect(formatTanggalJamWib('2026-11-24T17:30:00Z')).toBe('25 November 2026 00.30 WIB');
+  });
+});
+
+describe('tanggalValid', () => {
+  test('menerima tanggal nyata', () => {
+    expect(tanggalValid('2026-11-24')).toBe(true);
+    expect(tanggalValid('2028-02-29')).toBe(true);
+  });
+  test('menolak format salah dan tanggal yang tidak ada', () => {
+    expect(tanggalValid('2026-02-30')).toBe(false);
+    expect(tanggalValid('2027-02-29')).toBe(false);
+    expect(tanggalValid('2026-13-01')).toBe(false);
+    expect(tanggalValid('2026-1-1')).toBe(false);
+    expect(tanggalValid('24-11-2026')).toBe(false);
+    expect(tanggalValid('')).toBe(false);
   });
 });

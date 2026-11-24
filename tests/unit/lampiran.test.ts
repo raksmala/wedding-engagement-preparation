@@ -34,7 +34,10 @@ describe('namaTampil', () => {
 describe('pathLampiranSah', () => {
   test('hanya tabel di allowlist dan path di bawah tabel/id', () => {
     expect(pathLampiranSah('paket', ID, `paket/${ID}/1-a.png`)).toBe(true);
-    expect(pathLampiranSah('kontrak', ID, `kontrak/${ID}/1-a.png`)).toBe(false);
+    expect(pathLampiranSah('kontrak', ID, `kontrak/${ID}/1-a.png`)).toBe(true);
+    expect(pathLampiranSah('pembayaran', ID, `pembayaran/${ID}/1-a.png`)).toBe(true);
+    expect(pathLampiranSah('vendor', ID, `vendor/${ID}/1-a.png`)).toBe(false);
+    expect(pathLampiranSah('kontrak', ID, `paket/${ID}/1-a.png`)).toBe(false);
     expect(pathLampiranSah('paket', ID, `paket/${ID}/../x/1-a.png`)).toBe(false);
     expect(pathLampiranSah('paket', ID, `paket/${ID}/sub/1-a.png`)).toBe(false);
     expect(pathLampiranSah('paket', ID, `paket/lain/1-a.png`)).toBe(false);

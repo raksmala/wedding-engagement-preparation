@@ -26,12 +26,15 @@ export function UnggahLampiran({
   id,
   daftar,
   konteks,
+  judul = 'Lampiran',
 }: {
   tabel: string;
   id: string;
   daftar: BerkasLampiran[];
   konteks?: string;
+  judul?: string;
 }) {
+  const kecil = judul.toLowerCase();
   const router = useRouter();
   const idInput = useId();
   const dialog = useRef<HTMLDialogElement>(null);
@@ -92,9 +95,9 @@ export function UnggahLampiran({
 
   return (
     <div className="lampiran">
-      <h4>Lampiran</h4>
+      <h4>{judul}</h4>
       {daftar.length === 0 ? (
-        <p className="teks-lembut">Belum ada lampiran.</p>
+        <p className="teks-lembut">Belum ada {kecil}.</p>
       ) : (
         <ul className="daftar-lampiran">
           {daftar.map((b) => {
@@ -111,7 +114,7 @@ export function UnggahLampiran({
                 <button
                   type="button"
                   className="tombol-bahaya"
-                  aria-label={`Hapus lampiran ${nama}`}
+                  aria-label={`Hapus ${kecil} ${nama}`}
                   disabled={memproses}
                   onClick={() => {
                     setHapus(b.path);
@@ -133,7 +136,7 @@ export function UnggahLampiran({
       )}
       <div className="unggah">
         <label htmlFor={idInput}>
-          Unggah lampiran{konteks ? ` ${konteks}` : ''}
+          Unggah {kecil}{konteks ? ` ${konteks}` : ''}
         </label>
         <input
           id={idInput}
@@ -156,7 +159,7 @@ export function UnggahLampiran({
         aria-labelledby={`${idInput}-judul`}
         onClose={() => setHapus(undefined)}
       >
-        <h2 id={`${idInput}-judul`}>Hapus lampiran?</h2>
+        <h2 id={`${idInput}-judul`}>Hapus {kecil}?</h2>
         <p>{hapus ? namaTampil(hapus) : ''} akan dihapus dan tidak bisa dikembalikan.</p>
         <div className="baris-tombol">
           <button type="button" className="tombol-bahaya" onClick={konfirmasiHapus} disabled={memproses}>

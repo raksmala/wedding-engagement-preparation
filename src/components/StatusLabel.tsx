@@ -1,7 +1,7 @@
 import type { Database } from '@/lib/database.types';
 
 export type StatusVendor = Database['public']['Enums']['status_vendor'];
-export type StatusLain = 'lunas' | 'terlambat' | 'belum_bayar';
+export type StatusLain = 'lunas' | 'belum_lunas' | 'terjadwal' | 'dibayar' | 'terlambat' | 'belum_bayar';
 
 export const LABEL_STATUS_VENDOR: Record<StatusVendor, string> = {
   kandidat: 'Kandidat',
@@ -19,8 +19,11 @@ const TAMPIL: Record<StatusVendor | StatusLain, { label: string; warna: Warna }>
   booked: { label: LABEL_STATUS_VENDOR.booked, warna: 'aksen' },
   selesai: { label: LABEL_STATUS_VENDOR.selesai, warna: 'aksen' },
   batal: { label: LABEL_STATUS_VENDOR.batal, warna: 'lembut' },
-  // Status keuangan, dipakai Task 9.
+  // Status keuangan.
   lunas: { label: 'Lunas', warna: 'aksen' },
+  belum_lunas: { label: 'Belum lunas', warna: 'teks' },
+  terjadwal: { label: 'Terjadwal', warna: 'teks' },
+  dibayar: { label: 'Dibayar', warna: 'aksen' },
   terlambat: { label: 'Terlambat', warna: 'primer' },
   belum_bayar: { label: 'Belum bayar', warna: 'primer' },
 };

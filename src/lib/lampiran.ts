@@ -1,7 +1,6 @@
 import { adalahUuid } from './validasi';
 
-// Task 9 menambah 'kontrak' dan 'pembayaran'.
-export const TABEL_LAMPIRAN = ['paket'] as const;
+export const TABEL_LAMPIRAN = ['paket', 'kontrak', 'pembayaran'] as const;
 export type TabelLampiran = (typeof TABEL_LAMPIRAN)[number];
 
 export const BUCKET_LAMPIRAN = 'lampiran';

@@ -60,3 +60,12 @@ export function formatTanggalJamWib(iso: string): string {
   const [jam, menit] = formatJam.format(waktu).split(':');
   return `${formatTanggal(hariIniJakarta(waktu))} ${jam}.${menit} WIB`;
 }
+
+// Tanggal nyata berformat YYYY-MM-DD. Tanggal seperti 2026-02-30 ditolak.
+export function tanggalValid(s: string): boolean {
+  const cocok = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (!cocok) return false;
+  const [tahun, bulan, hari] = [Number(cocok[1]), Number(cocok[2]), Number(cocok[3])];
+  const d = new Date(Date.UTC(tahun, bulan - 1, hari));
+  return d.getUTCFullYear() === tahun && d.getUTCMonth() === bulan - 1 && d.getUTCDate() === hari;
+}

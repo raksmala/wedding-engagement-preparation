@@ -575,3 +575,81 @@ a.tombol-sekunder {
 .tabel-komparasi .kolom-dipilih.kosong-sel {
   color: var(--teks);
 }
+
+/* Kontrak, Pembayaran, Kontribusi */
+.baris-judul {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+}
+
+.daftar-alokasi {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.daftar-alokasi li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem 0.75rem;
+  overflow-wrap: anywhere;
+}
+
+.bagian h3 {
+  margin: 1rem 0 0.5rem;
+  font-size: 1.25rem;
+}
+
+.kelebihan {
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+}
+
+.aksi-kontrak {
+  margin: 0 0 1rem;
+}
+
+details.bukti {
+  margin: 0 0 0.75rem;
+}
+
+details summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.kartu-kontribusi {
+  padding: 0 1rem;
+}
+
+.kartu-kontribusi details {
+  padding-bottom: 0.25rem;
+}
+
+.kartu-kontribusi summary {
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.kartu-kontribusi .daftar-alokasi {
+  margin-bottom: 0.5rem;
+}
+
+.total-kontribusi {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  margin: 0 0 1.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+}

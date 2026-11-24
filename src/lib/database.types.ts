@@ -939,10 +939,26 @@ export type Database = {
     }
     Functions: {
       editor_saat_ini: { Args: never; Returns: string }
+      hapus_lampiran: {
+        Args: { p_id: string; p_path: string; p_tabel: string }
+        Returns: undefined
+      }
       is_editor: { Args: never; Returns: boolean }
       pastikan_editor: { Args: never; Returns: string }
+      periksa_alokasi: {
+        Args: { p_alokasi: Json; p_vendor_id: string }
+        Returns: undefined
+      }
       pilih_paket: {
         Args: { p_alokasi?: Json; p_paket_id: string }
+        Returns: string
+      }
+      simpan_alokasi: {
+        Args: { p_alokasi: Json; p_kontrak_id: string }
+        Returns: undefined
+      }
+      simpan_kontrak: {
+        Args: { p_alokasi: Json; p_data: Json; p_vendor_id: string }
         Returns: string
       }
       simpan_paket: {
@@ -952,6 +968,10 @@ export type Database = {
       simpan_vendor: {
         Args: { p_acara_ids: string[]; p_data: Json; p_id: string }
         Returns: string
+      }
+      tambah_lampiran: {
+        Args: { p_id: string; p_path: string; p_tabel: string }
+        Returns: undefined
       }
       urutkan_komponen: {
         Args: { p_kategori_id: string; p_urutan: string[] }

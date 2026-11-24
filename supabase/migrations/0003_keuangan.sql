@@ -348,3 +348,183 @@ create constraint trigger kontrak_beralokasi after insert on kontrak
 create constraint trigger kontrak_beralokasi_hapus after delete or update of kontrak_id on alokasi_acara
   deferrable initially deferred
   for each row execute function pastikan_kontrak_beralokasi();
+
+-- Aturan p_alokasi yang sama dengan pilih_paket, dipakai simpan_kontrak dan simpan_alokasi:
+-- minimal satu baris, acara unik dan milik Vendor, nominal bilangan bulat >= 0.
+create function periksa_alokasi(p_vendor_id uuid, p_alokasi jsonb)
+returns void
+language plpgsql security invoker set search_path = public
+as $$
+declare
+  v_acara_vendor uuid[];
+  v_ids uuid[] := '{}';
+  v_id uuid;
+  e jsonb;
+begin
+  if p_alokasi is null or jsonb_typeof(p_alokasi) <> 'array' then
+    raise exception 'alokasi_tidak_valid';
+  end if;
+  if jsonb_array_length(p_alokasi) = 0 then
+    raise exception 'alokasi_wajib';
+  end if;
+
+  select coalesce(array_agg(acara_id), '{}') into v_acara_vendor
+  from vendor_acara where vendor_id = p_vendor_id;
+
+  for e in select * from jsonb_array_elements(p_alokasi) loop
+    if jsonb_typeof(e) is distinct from 'object'
+       or jsonb_typeof(e -> 'acara_id') is distinct from 'string'
+       or (e ->> 'acara_id') !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+       or jsonb_typeof(e -> 'nominal') is distinct from 'number'
+       or (e ->> 'nominal')::numeric <> trunc((e ->> 'nominal')::numeric)
+       or (e ->> 'nominal')::numeric < 0
+       or (e ->> 'nominal')::numeric > 9000000000000000000
+    then
+      raise exception 'alokasi_tidak_valid';
+    end if;
+    v_id := (e ->> 'acara_id')::uuid;
+    if v_id = any (v_ids) then
+      raise exception 'alokasi_tidak_valid';
+    end if;
+    v_ids := v_ids || v_id;
+    if not (v_id = any (v_acara_vendor)) then
+      raise exception 'acara_bukan_milik_vendor';
+    end if;
+  end loop;
+end;
+$$;
+
+-- Kontrak manual untuk Vendor tanpa Paket. p_data: {"tanggal_kesepakatan": "2026-12-01", "catatan": "..."}.
+-- Kontrak dan Alokasi Acara-nya ditulis dalam satu transaksi.
+create function simpan_kontrak(p_vendor_id uuid, p_data jsonb, p_alokasi jsonb)
+returns uuid
+language plpgsql security invoker set search_path = public
+as $$
+declare
+  v_kontrak_id uuid;
+begin
+  perform 1 from vendor where id = p_vendor_id for update;
+  if not found then
+    raise exception 'vendor_tidak_ditemukan';
+  end if;
+  if exists (select 1 from kontrak where vendor_id = p_vendor_id) then
+    raise exception 'kontrak_sudah_ada';
+  end if;
+
+  perform periksa_alokasi(p_vendor_id, p_alokasi);
+
+  insert into kontrak (vendor_id, tanggal_kesepakatan, catatan)
+  values (
+    p_vendor_id,
+    nullif(p_data ->> 'tanggal_kesepakatan', '')::date,
+    nullif(p_data ->> 'catatan', '')
+  )
+  returning id into v_kontrak_id;
+
+  insert into alokasi_acara (kontrak_id, acara_id, nominal)
+  select v_kontrak_id, (x ->> 'acara_id')::uuid, (x ->> 'nominal')::bigint
+  from jsonb_array_elements(p_alokasi) x;
+
+  return v_kontrak_id;
+end;
+$$;
+
+-- Mengganti seluruh Alokasi Acara satu Kontrak. Baris yang acaranya tetap ikut diperbarui,
+-- bukan dihapus lalu dibuat ulang, supaya catatan dan jejak audit-nya tidak hilang.
+create function simpan_alokasi(p_kontrak_id uuid, p_alokasi jsonb)
+returns void
+language plpgsql security invoker set search_path = public
+as $$
+declare
+  v_vendor_id uuid;
+begin
+  select vendor_id into v_vendor_id from kontrak where id = p_kontrak_id for update;
+  if v_vendor_id is null then
+    raise exception 'kontrak_tidak_ditemukan';
+  end if;
+
+  perform periksa_alokasi(v_vendor_id, p_alokasi);
+
+  delete from alokasi_acara
+  where kontrak_id = p_kontrak_id
+    and acara_id not in (select (x ->> 'acara_id')::uuid from jsonb_array_elements(p_alokasi) x);
+
+  insert into alokasi_acara (kontrak_id, acara_id, nominal)
+  select p_kontrak_id, (x ->> 'acara_id')::uuid, (x ->> 'nominal')::bigint
+  from jsonb_array_elements(p_alokasi) x
+  on conflict (kontrak_id, acara_id) do update set nominal = excluded.nominal;
+end;
+$$;
+
+-- Lampiran Paket, Kontrak, dan bukti Pembayaran. Satu pernyataan per perubahan, jadi unggahan
+-- yang berjalan bersamaan tidak saling menimpa. Nama tabel tidak pernah dirangkai dari input.
+-- Baris yang tidak ada atau tersembunyi oleh RLS menghasilkan error.
+create function tambah_lampiran(p_tabel text, p_id uuid, p_path text)
+returns void
+language plpgsql security invoker set search_path = public
+as $$
+declare
+  v_ada boolean;
+begin
+  if p_tabel = 'paket' then
+    update paket set lampiran = array_append(lampiran, p_path)
+    where id = p_id and not (p_path = any (lampiran));
+    if not found then
+      select exists (select 1 from paket where id = p_id) into v_ada;
+    else
+      v_ada := true;
+    end if;
+  elsif p_tabel = 'kontrak' then
+    update kontrak set lampiran = array_append(lampiran, p_path)
+    where id = p_id and not (p_path = any (lampiran));
+    if not found then
+      select exists (select 1 from kontrak where id = p_id) into v_ada;
+    else
+      v_ada := true;
+    end if;
+  elsif p_tabel = 'pembayaran' then
+    update pembayaran set bukti = array_append(bukti, p_path)
+    where id = p_id and not (p_path = any (bukti));
+    if not found then
+      select exists (select 1 from pembayaran where id = p_id) into v_ada;
+    else
+      v_ada := true;
+    end if;
+  else
+    raise exception 'tabel_tidak_valid';
+  end if;
+  if not v_ada then
+    raise exception 'lampiran_baris_tidak_ditemukan';
+  end if;
+end;
+$$;
+
+create function hapus_lampiran(p_tabel text, p_id uuid, p_path text)
+returns void
+language plpgsql security invoker set search_path = public
+as $$
+begin
+  if p_tabel = 'paket' then
+    update paket set lampiran = array_remove(lampiran, p_path)
+    where id = p_id and p_path = any (lampiran);
+  elsif p_tabel = 'kontrak' then
+    update kontrak set lampiran = array_remove(lampiran, p_path)
+    where id = p_id and p_path = any (lampiran);
+  elsif p_tabel = 'pembayaran' then
+    update pembayaran set bukti = array_remove(bukti, p_path)
+    where id = p_id and p_path = any (bukti);
+  else
+    raise exception 'tabel_tidak_valid';
+  end if;
+  if not found then
+    raise exception 'lampiran_tidak_ditemukan';
+  end if;
+end;
+$$;
+
+revoke all on function periksa_alokasi(uuid, jsonb), simpan_kontrak(uuid, jsonb, jsonb),
+  simpan_alokasi(uuid, jsonb), tambah_lampiran(text, uuid, text), hapus_lampiran(text, uuid, text)
+  from public, anon;
+grant execute on function periksa_alokasi(uuid, jsonb), simpan_kontrak(uuid, jsonb, jsonb),
+  simpan_alokasi(uuid, jsonb), tambah_lampiran(text, uuid, text), hapus_lampiran(text, uuid, text)
+  to authenticated;

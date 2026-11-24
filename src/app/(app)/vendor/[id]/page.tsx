@@ -10,6 +10,7 @@ import { urlLampiran } from '@/lib/urlLampiran';
 import { adalahUuid } from '@/lib/validasi';
 import type { TipeKomponen } from '@/lib/komponen';
 import { DaftarPaket } from './DaftarPaket';
+import { SeksiKontrak } from './kontrak/SeksiKontrak';
 import { UbahStatus } from './UbahStatus';
 
 export default async function VendorDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -132,7 +133,7 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
         komponen={komponen.data.map((k) => ({ ...k, tipe: k.tipe as TipeKomponen }))}
         url={urlBerkas}
       />
-      {/* Slot Kontrak dan Pembayaran (Task 9): section Kontrak, Alokasi Acara, dan Pembayaran dipasang di sini. */}
+      <SeksiKontrak vendorId={v.id} status={v.status} />
       {/* Slot Log Kontak (Task 10): section Log Kontak dan Tugas follow-up dipasang di sini. */}
 
       <p className="jejak-audit">
