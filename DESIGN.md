@@ -62,6 +62,7 @@ Garis tipis ganda berwarna `--primary` sebagai pemisah di bawah judul halaman, m
 - Navigasi bawah: bar tetap di bawah layar dengan latar `--bg` dan garis atas `--garis`. Halaman aktif ditandai garis atas 3px `--primary` dan huruf tebal, jadi tidak hanya dibedakan warna. Tinggi item 56px supaya mudah diketuk dengan jempol.
 - Dashboard: kelompok Terlambat diberi bingkai 2px `--primary` dan judul lebih besar sebagai satu-satunya titik fokus. Kelompok lain memakai gaya `bagian` biasa.
 - Halaman Pembaca (`/s/[token]`, class `.halaman-pembaca`): lebar isi maksimal 720px, sama dengan shell Editor (`.isi-utama`), dengan padding 1rem di kiri dan kanan supaya tetap pas di 375px. Tanpa navigasi bawah dan tanpa link ke halaman Editor. Wordmark "Rendy & Dinar" menjadi judul halaman dengan motif garis ganda, label Share Link di bawahnya. Kartu dan status memakai gaya yang sama dengan halaman Editor.
+- Halaman 404 (`src/app/not-found.tsx`, class `.halaman-mandiri`): ukuran sama dengan `.halaman-pembaca`, tanpa navigasi bawah. Wordmark "Rendy & Dinar" sebagai judul, lalu tampilan kosong dengan link "Kembali ke dashboard".
 - Pesan berhasil (misalnya "Link disalin") memakai bingkai 1px `--accent` dengan teks `--teks` tebal, pasangan dari `pesan-galat` yang berbingkai `--primary`. Statusnya tetap dibaca dari teks, bukan dari warna bingkai.
 
 ## Nilai visual yang dipakai di `globals.css`
@@ -103,7 +104,7 @@ Skala yang dipakai (dalam `rem`, 1rem = 16px): `0.125`, `0.25`, `0.5`, `0.75`, `
 | `1rem` | Padding kartu, jarak antar field form, padding kiri kanan halaman | Satu jarak dasar untuk isi |
 | `1.25rem` | Padding kiri kanan tombol, padding dialog | Tombol tidak terlihat sesak walaupun labelnya pendek |
 | `1.5rem` | Jarak bawah judul halaman, section (`.bagian`), form, filter | Pemisah antar bagian halaman |
-| `2rem` | Padding atas halaman (`.isi-utama`, `.halaman-pembaca`, login), jarak antar section di halaman Pembaca | Ruang napas di bawah status bar HP |
+| `2rem` | Padding atas halaman (`.isi-utama`, `.halaman-pembaca`, `.halaman-mandiri`, login), jarak antar section di halaman Pembaca | Ruang napas di bawah status bar HP |
 | `3rem` | Padding bawah halaman Pembaca | Halaman Pembaca tidak punya navigasi bawah |
 | `calc(6rem + env(safe-area-inset-bottom))` | Padding bawah `.isi-utama` | Isi terakhir tidak tertutup navigasi bawah setinggi 56px dan indikator home iPhone |
 
@@ -136,7 +137,7 @@ Tebal huruf: `600` untuk label form, tombol, status, dan judul. `700` untuk item
 
 | Nilai | Dipakai di | Alasan |
 |---|---|---|
-| `max-width: 720px`, tengah | `.isi-utama`, `.halaman-pembaca`, isi navigasi bawah | Baris teks tidak terlalu panjang di laptop, dan isi navigasi sejajar dengan isi halaman |
+| `max-width: 720px`, tengah | `.isi-utama`, `.halaman-pembaca`, `.halaman-mandiri`, isi navigasi bawah | Baris teks tidak terlalu panjang di laptop, dan isi navigasi sejajar dengan isi halaman |
 | `max-width: 480px` | Halaman login (inline style di `src/app/login/page.tsx`) | Halaman login hanya berisi satu tombol, jadi kolomnya lebih sempit |
 | `width: min(92vw, 420px)` | `.dialog` | Di 375px dialog menyisakan tepi, di laptop tidak melebar |
 | `min-width: 12rem` | `.menu-lainnya` | Label menu terpanjang ("Share Link", "Pengaturan") muat dalam satu baris |

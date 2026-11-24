@@ -33,30 +33,39 @@ test.afterAll(async () => {
   }
 });
 
-async function vendorFotoA(): Promise<string> {
+async function vendorFoto(nama = 'Uji Foto A'): Promise<string> {
   const { data: k, error: ek } = await editor.from('kategori_vendor').select('id').eq('nama', 'Foto & Video').single();
   if (ek) throw ek;
   const { data, error } = await editor
     .from('vendor')
-    .insert({ nama: 'Uji Foto A', kategori_vendor_id: k.id })
+    .insert({ nama, kategori_vendor_id: k.id })
     .select('id')
     .single();
   if (error) throw error;
   return data.id;
 }
 
+async function buatTugas(judul: string, terkait: { vendor_id?: string; acara_id?: string } = {}): Promise<void> {
+  const { data: pic, error: ep } = await editor.rpc('editor_saat_ini');
+  if (ep) throw ep;
+  const { error } = await editor.from('tugas').insert({ judul, pic_id: pic as string, ...terkait });
+  if (error) throw error;
+}
+
 const logKontak = (page: Page) => page.getByRole('region', { name: 'Log Kontak' });
 const daftarTugas = (page: Page) => page.getByRole('list', { name: 'Daftar tugas' });
 
-async function filterTugas(page: Page, o: { pic?: string; status?: string }) {
+async function filterTugas(page: Page, o: { pic?: string; acara?: string; vendor?: string; status?: string }) {
   const form = page.getByRole('search', { name: 'Filter tugas' });
   if (o.pic) await form.getByLabel('PIC').selectOption({ label: o.pic });
+  if (o.acara) await form.getByLabel('Acara').selectOption({ label: o.acara });
+  if (o.vendor) await form.getByLabel('Vendor').selectOption({ label: o.vendor });
   if (o.status) await form.getByLabel('Status').selectOption({ label: o.status });
   await form.getByRole('button', { name: 'Terapkan' }).click();
 }
 
 test('log kontak whatsapp dan follow-up untuk Dinar tampil di halaman tugas', async ({ page }) => {
-  const vendorId = await vendorFotoA();
+  const vendorId = await vendorFoto();
   await page.goto(`/vendor/${vendorId}`);
 
   const seksi = logKontak(page);
@@ -92,6 +101,54 @@ test('log kontak whatsapp dan follow-up untuk Dinar tampil di halaman tugas', as
 
   await filterTugas(page, { pic: 'Dinar' });
   await expect(page.getByText('Uji Cek revisi pricelist Foto A')).toBeVisible();
+});
+
+test('filter vendor hanya menampilkan tugas vendor itu dan pilihannya tetap terpilih', async ({ page }) => {
+  const idA = await vendorFoto('Uji Foto A');
+  const idB = await vendorFoto('Uji Foto B');
+  await buatTugas('Uji Tugas Vendor A', { vendor_id: idA });
+  await buatTugas('Uji Tugas Vendor B', { vendor_id: idB });
+  await buatTugas('Uji Tugas Tanpa Vendor');
+
+  await page.goto('/tugas');
+  await expect(page.getByText('Uji Tugas Vendor A')).toBeVisible();
+  await expect(page.getByText('Uji Tugas Tanpa Vendor')).toBeVisible();
+
+  await filterTugas(page, { vendor: 'Uji Foto A' });
+  await expect(page).toHaveURL(new RegExp(`vendor=${idA}`));
+  await expect(page.getByRole('search', { name: 'Filter tugas' }).getByLabel('Vendor')).toHaveValue(idA);
+  await expect(page.getByText('Uji Tugas Vendor A')).toBeVisible();
+  await expect(page.getByText('Uji Tugas Vendor B')).toHaveCount(0);
+  await expect(page.getByText('Uji Tugas Tanpa Vendor')).toHaveCount(0);
+
+  // Vendor tanpa tugas yang cocok: tampilan kosong dengan tombol hapus filter.
+  await page.goto(`/tugas?vendor=${idB}&status=selesai`);
+  await expect(page.getByText('Tidak ada tugas yang cocok dengan filter ini.')).toBeVisible();
+  await page.getByRole('link', { name: 'Hapus filter' }).click();
+  await expect(page).toHaveURL(/\/tugas$/);
+  await expect(page.getByText('Uji Tugas Vendor B')).toBeVisible();
+});
+
+test('filter acara hanya menampilkan tugas acara itu, id tidak valid diabaikan', async ({ page }) => {
+  const { data: acara, error } = await editor.from('acara').select('id, nama').in('nama', ['Lamaran', 'Resepsi']);
+  if (error) throw error;
+  const lamaran = acara.find((a) => a.nama === 'Lamaran')!;
+  const resepsi = acara.find((a) => a.nama === 'Resepsi')!;
+  await buatTugas('Uji Tugas Lamaran', { acara_id: lamaran.id });
+  await buatTugas('Uji Tugas Resepsi', { acara_id: resepsi.id });
+
+  await page.goto('/tugas');
+  await filterTugas(page, { acara: 'Lamaran' });
+  await expect(page).toHaveURL(new RegExp(`acara=${lamaran.id}`));
+  await expect(page.getByRole('search', { name: 'Filter tugas' }).getByLabel('Acara')).toHaveValue(lamaran.id);
+  const item = daftarTugas(page).getByRole('listitem').filter({ hasText: 'Uji Tugas Lamaran' });
+  await expect(item.getByRole('link', { name: 'Lamaran' })).toHaveAttribute('href', `/acara/${lamaran.id}`);
+  await expect(page.getByText('Uji Tugas Resepsi')).toHaveCount(0);
+
+  await page.goto('/tugas?acara=bukan-uuid');
+  await expect(page.getByRole('search', { name: 'Filter tugas' }).getByLabel('Acara')).toHaveValue('');
+  await expect(page.getByText('Uji Tugas Lamaran')).toBeVisible();
+  await expect(page.getByText('Uji Tugas Resepsi')).toBeVisible();
 });
 
 test('tugas tanpa jatuh tempo, selesai, lalu dibuka lagi', async ({ page }) => {

@@ -666,9 +666,15 @@ details summary {
   white-space: pre-line;
 }
 
+/* Filter Tugas: empat pilihan dalam dua kolom, tombol Terapkan di baris sendiri. */
 @media (min-width: 560px) {
-  .filter.filter-dua {
-    grid-template-columns: repeat(2, 1fr) auto;
+  .filter.filter-empat {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .filter.filter-empat button {
+    justify-self: start;
+    grid-column: 1 / -1;
   }
 }
 
@@ -833,7 +839,8 @@ details summary {
 }
 
 /* Halaman Pembaca: di luar shell Editor, tanpa navigasi bawah. */
-.halaman-pembaca {
+.halaman-pembaca,
+.halaman-mandiri {
   max-width: 720px;
   margin: 0 auto;
   padding: 2rem 1rem 3rem;

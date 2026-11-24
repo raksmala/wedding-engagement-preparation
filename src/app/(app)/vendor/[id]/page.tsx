@@ -100,7 +100,15 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
         {v.link && (
           <div>
             <dt>Link</dt>
-            <dd>{linkAman ? <a href={linkAman} target="_blank" rel="noopener noreferrer">{v.link}</a> : v.link}</dd>
+            <dd>
+              {linkAman ? (
+                <a href={linkAman} target="_blank" rel="noopener noreferrer" className="tautan-aksi">
+                  {v.link}
+                </a>
+              ) : (
+                v.link
+              )}
+            </dd>
           </div>
         )}
         {v.catatan && (

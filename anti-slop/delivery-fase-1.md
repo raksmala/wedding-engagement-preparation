@@ -4,6 +4,8 @@
 
 Laporan ini disusun pada 24 November 2026 (Task 14) tanpa menjalankan apa pun: tidak ada `node_modules`, tidak ada akses ke Supabase atau Vercel, dan tidak ada browser. Yang ditandai PASS atau FAIL di bawah hanya yang benar-benar dicek, yaitu hitungan kontras dan pemeriksaan statis lewat `grep` dan membaca kode. Semua yang butuh aplikasi berjalan ditandai BELUM DICEK, BELUM DIJALANKAN, atau BELUM DIVERIFIKASI.
 
+Pembaruan (commit "fix: tutup celah delivery gate fase 1"): halaman 404 Indonesia, filter Acara dan Vendor di Tugas, test e2e Pembayaran Terjadwal di kelompok Terlambat, dan tap target link alamat web vendor sudah diperbaiki di kode. Semuanya baru dicek sintaksnya, belum dijalankan di browser atau lewat test, jadi tetap BELUM DIVERIFIKASI. Rinciannya di bagian 6.
+
 Gate ini baru lulus kalau semua test di bagian 4 PASS, tabel elemen di bagian 3 terisi tanpa FAIL di 375px dan desktop, dan temuan FAIL di bagian 6 sudah diperbaiki atau diputuskan Rendy.
 
 ## 1. Hasil kontras (dihitung)
@@ -49,12 +51,12 @@ Teks besar (judul Cormorant 1.375rem sampai 2rem) semuanya memakai `--primary` d
 | Tidak ada em dash di pesan commit | PASS | `git log --format=%B` disaring dengan `grep -c` untuk U+2014: 0 |
 | Tidak ada `outline: none` tanpa pengganti | PASS | `grep -rn outline src` hanya menemukan `:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px }` dan `.navigasi-bawah :focus-visible { outline-offset: -4px }` |
 | Setiap halaman data punya `loading.tsx` dan `error.tsx` | PASS | Lihat daftar di bawah. Boundary di folder induk berlaku untuk halaman di bawahnya |
-| Halaman 404 berbahasa Indonesia | **FAIL** | Tidak ada `src/app/not-found.tsx`. URL yang tidak ada, dan `/acara/[id]` dengan id tidak valid (`notFound()` tanpa `not-found.tsx` di foldernya), memakai halaman 404 bawaan Next.js yang berbahasa Inggris. `vendor/[id]`, `vendor/[id]/paket`, dan `komparasi/[kategoriId]` sudah punya `not-found.tsx` sendiri |
+| Halaman 404 berbahasa Indonesia | Diperbaiki, BELUM DIVERIFIKASI | Sebelumnya FAIL: tidak ada `src/app/not-found.tsx`. Sekarang ada, berisi judul "Rendy & Dinar", pesan "Halaman tidak ditemukan.", dan link "Kembali ke dashboard" ke `/`. Halaman ini menangani URL yang tidak ada dan `notFound()` di `/acara/[id]`. Dirender di layout root, jadi tanpa navigasi bawah. `vendor/[id]` (termasuk `vendor/[id]/ubah`), `vendor/[id]/paket`, dan `komparasi/[kategoriId]` tetap memakai `not-found.tsx` sendiri |
 | Tidak ada link ke route yang tidak ada | PASS | Semua `href`, `redirect()`, `router.push/replace`, dan `action` form dicocokkan ke `page.tsx`. Daftar di bawah |
 | Kata dari daftar `_Avoid_` `CONTEXT.md` di teks UI | PASS setelah perbaikan | Dua teks memakai "tahap" (dihindari untuk Status Vendor), diperbaiki di commit ini. Sisanya positif palsu, lihat di bawah |
 | Warna hanya dari token | PASS dengan catatan | `grep -rnoE "#[0-9a-fA-F]{3,8}"` di `src` dan `public`: selain token di `:root`, hanya `#fff` (6 kali di `globals.css`), `rgb(43 35 37 / 0.5)` untuk backdrop, serta `#80172c` dan `#f5efef` literal di `layout.tsx` (`themeColor`) dan `manifest.webmanifest`. Semuanya sekarang tercatat di `DESIGN.md` beserta alasan dan kontrasnya |
 | Satu-satunya inline style | Dicatat | `src/app/login/page.tsx`: `padding: 2rem 1rem; maxWidth: 480; margin: 0 auto`. Nilainya dicatat di `DESIGN.md` bagian Layout |
-| Tap target 44px untuk link yang berdiri sendiri | PASS setelah perbaikan, sisa satu | Empat link tanpa class 44px diberi `tautan-aksi` di commit ini. Sisa: link alamat web vendor di `<dd>` detail Vendor (`vendor/[id]/page.tsx`), sengaja tidak diubah karena berupa URL panjang di dalam daftar data. Cek di 375px |
+| Tap target 44px untuk link yang berdiri sendiri | PASS setelah perbaikan, BELUM DIVERIFIKASI | Empat link tanpa class 44px diberi `tautan-aksi` di commit Task 14. Sisa terakhir, link alamat web vendor di `<dd>` detail Vendor (`vendor/[id]/page.tsx`), sekarang juga memakai `tautan-aksi`. URL panjang tetap bisa patah baris karena `.rincian dd` memakai `overflow-wrap: anywhere`. Cek di 375px |
 | Tombol nonaktif terlihat nonaktif | PASS setelah perbaikan | `.tombol-sekunder` tidak punya gaya `:disabled`, sehingga "Simpan status", "Naik", dan "Turun" yang nonaktif terlihat sama dengan yang aktif. Ditambah `opacity: 0.7; cursor: not-allowed` di commit ini |
 | `lang="id"` di `<html>` | PASS | `src/app/layout.tsx` |
 | Nominal memakai `tabular-nums` | PASS | `.rupiah` dipakai di `Rupiah.tsx`, sel Harga Komparasi, dan Harga di daftar Paket |
@@ -82,7 +84,7 @@ Teks besar (judul Cormorant 1.375rem sampai 2rem) semuanya memakai `--primary` d
 
 | Tujuan | Route di `src/app` |
 |---|---|
-| `/` | `(app)/page.tsx` |
+| `/` (juga dari "Kembali ke dashboard" di halaman 404) | `(app)/page.tsx` |
 | `/login`, `/login?error=...` | `login/page.tsx` |
 | `/acara`, `/acara/baru`, `/acara/{id}` | `(app)/acara/page.tsx`, `(app)/acara/[id]/page.tsx` (menangani `baru`) |
 | `/vendor`, `/vendor?kategori=&status=&acara=` | `(app)/vendor/page.tsx` |
@@ -90,7 +92,7 @@ Teks besar (judul Cormorant 1.375rem sampai 2rem) semuanya memakai `--primary` d
 | `/vendor/{id}`, `/vendor/{id}/ubah` | `(app)/vendor/[id]/page.tsx`, `(app)/vendor/[id]/ubah/page.tsx` |
 | `/vendor/{id}/paket/baru`, `/vendor/{id}/paket/{paketId}/ubah` | `(app)/vendor/[id]/paket/baru/page.tsx`, `(app)/vendor/[id]/paket/[paketId]/ubah/page.tsx` |
 | `/komparasi`, `/komparasi/{kategoriId}` | `(app)/komparasi/page.tsx`, `(app)/komparasi/[kategoriId]/page.tsx` |
-| `/tugas`, `/tugas?pic=&status=` | `(app)/tugas/page.tsx` |
+| `/tugas`, `/tugas?pic=&acara=&vendor=&status=` | `(app)/tugas/page.tsx` |
 | `/kontribusi` | `(app)/kontribusi/page.tsx` |
 | `/pengaturan`, `/pengaturan/komponen?kategori=&ubah=` | `(app)/pengaturan/page.tsx`, `(app)/pengaturan/komponen/page.tsx` |
 | `/share` | `(app)/share/page.tsx` |
@@ -133,6 +135,7 @@ Kolom "Aksi yang diharapkan" diisi dari kode. Kolom 375px dan Desktop diisi Rend
 | `/login?error=bukan-editor` | Pesan galat | Tampil "Akun ini tidak terdaftar sebagai Editor." | BELUM DICEK | BELUM DICEK | |
 | `/login?error=gagal-masuk` | Pesan galat | Tampil "Gagal masuk. Coba lagi." | BELUM DICEK | BELUM DICEK | |
 | `/` Dashboard | "Tambah vendor" (tampilan kosong) | Ke `/vendor/baru`. Hanya tampil kalau belum ada Vendor dan belum ada Tugas sama sekali | BELUM DICEK | BELUM DICEK | |
+| `/` Dashboard | Item Pembayaran Terjadwal lewat Jatuh Tempo | Tampil di kelompok Terlambat dengan judul "{Jenis} {Vendor}", nominal, dan label Terlambat. Hitungan kelompok bertambah satu | BELUM DICEK | BELUM DICEK | Baru diuji e2e di `dashboard.spec.ts` ("pembayaran terjadwal yang lewat jatuh tempo..."), belum dijalankan |
 | `/` Dashboard | "Selesai" di item Tugas | Menandai Tugas selesai, item hilang, hitungan kelompok berkurang, fokus pindah ke judul kelompok | BELUM DICEK | BELUM DICEK | |
 | `/` Dashboard | "Tandai dibayar" di item Pembayaran | Membuka atau menutup form di dalam kartu | BELUM DICEK | BELUM DICEK | |
 | `/` Dashboard | Form tandai dibayar: "Simpan" | Tanpa Pihak: pesan galat. Dengan Pihak: item hilang, fokus ke judul kelompok | BELUM DICEK | BELUM DICEK | |
@@ -155,7 +158,7 @@ Kolom "Aksi yang diharapkan" diisi dari kode. Kolom 375px dan Desktop diisi Rend
 | `/vendor/baru` | "Simpan" | Menyimpan Vendor dan Acara-nya, lalu ke `/vendor/{id}`. Gagal: pesan galat, isian tetap | BELUM DICEK | BELUM DICEK | |
 | `/vendor/baru` | "Kembali ke daftar vendor" | Ke `/vendor` | BELUM DICEK | BELUM DICEK | |
 | `/vendor/{id}` | "Ubah status" + "Simpan status" | Tombol nonaktif selama status belum diganti. Simpan mengubah label status | BELUM DICEK | BELUM DICEK | Gaya nonaktif baru di commit ini |
-| `/vendor/{id}` | Link alamat web vendor | Membuka tab baru, hanya untuk `http(s)://` | BELUM DICEK | BELUM DICEK | Tanpa class 44px, cek tap target dan lebar di 375px |
+| `/vendor/{id}` | Link alamat web vendor | Membuka tab baru, hanya untuk `http(s)://` | BELUM DICEK | BELUM DICEK | Sekarang memakai `tautan-aksi` (tinggi 44px, huruf tebal). Cek URL panjang tidak melebarkan halaman di 375px |
 | `/vendor/{id}` | "Chat WhatsApp" | Membuka `https://wa.me/62...` di tab baru. Tidak tampil kalau nomor tidak dikenali | BELUM DICEK | BELUM DICEK | |
 | `/vendor/{id}` | "Ubah vendor" | Ke `/vendor/{id}/ubah` | BELUM DICEK | BELUM DICEK | |
 | `/vendor/{id}` | "Bandingkan paket di kategori ini" | Ke `/komparasi/{kategoriId}` | BELUM DICEK | BELUM DICEK | |
@@ -197,7 +200,9 @@ Kolom "Aksi yang diharapkan" diisi dari kode. Kolom 375px dan Desktop diisi Rend
 | `/komparasi/{kategoriId}` | Tampilan kosong: "Lihat semua paket" atau "Lihat vendor" | Ke `/komparasi/{kategoriId}` atau `/vendor` | BELUM DICEK | BELUM DICEK | |
 | `/komparasi/{kategoriId}` | "Kembali ke daftar kategori" | Ke `/komparasi` | BELUM DICEK | BELUM DICEK | |
 | `/komparasi/{kategoriId}` tidak ada | "Kembali ke komparasi" | Ke `/komparasi` | BELUM DICEK | BELUM DICEK | |
-| `/tugas` | Filter PIC, Status, "Terapkan" | Memuat `/tugas?pic=&status=`. Default status "Belum selesai" | BELUM DICEK | BELUM DICEK | Filter Acara dan Vendor dari PRD tidak ada, lihat bagian 6 |
+| `/tugas` | Filter PIC, Acara, Vendor, Status, "Terapkan" | Memuat `/tugas?pic=&acara=&vendor=&status=` dengan pilihan tetap terpilih. Default status "Belum selesai". Id yang bukan uuid diabaikan | BELUM DICEK | BELUM DICEK | Acara dan Vendor baru ditambah. Di 375px satu kolom, di 560px ke atas dua kolom dengan "Terapkan" di baris sendiri (`.filter-empat`) |
+| `/tugas` | Filter Acara | Hanya Tugas yang terkait Acara itu. Urutan pilihan sama dengan filter Vendor (tanggal, lalu nama) | BELUM DICEK | BELUM DICEK | Diuji `tugas.spec.ts` ("filter acara..."), belum dijalankan |
+| `/tugas` | Filter Vendor | Hanya Tugas yang terkait Vendor itu. Pilihan diurutkan per nama | BELUM DICEK | BELUM DICEK | Diuji `tugas.spec.ts` ("filter vendor..."), belum dijalankan |
 | `/tugas` | "Tambah tugas", lalu "Simpan tugas" atau "Batal" | Form di atas daftar. Judul kosong ditolak dengan pesan | BELUM DICEK | BELUM DICEK | |
 | `/tugas` | "Selesai" atau "Buka lagi" per Tugas | Mengubah status Tugas | BELUM DICEK | BELUM DICEK | |
 | `/tugas` | "Ubah" per Tugas | Mengganti kartu dengan form. Tugas follow-up: Vendor terkunci | BELUM DICEK | BELUM DICEK | |
@@ -224,6 +229,7 @@ Kolom "Aksi yang diharapkan" diisi dari kode. Kolom 375px dan Desktop diisi Rend
 | `/share` | "Cabut", lalu dialog "Cabut" atau "Batal" | Link jadi "Dicabut", kotak link hilang, fokus ke judul kartu | BELUM DICEK | BELUM DICEK | |
 | `/s/{token}` | (tidak ada tombol atau link) | Menampilkan label dan bagian yang dicentang saja. Token dicabut atau tidak ada: "Link ini sudah tidak aktif." | BELUM DICEK | BELUM DICEK | Sengaja tanpa link ke halaman Editor |
 | `/s/{token}` | "Coba lagi" di tampilan error | Memanggil `reset()` | BELUM DICEK | BELUM DICEK | |
+| URL yang tidak ada, `/acara/{id}` tidak ada | "Kembali ke dashboard" | Halaman 404 Indonesia tanpa navigasi bawah. Link ke `/`. Belum login: `(app)/layout.tsx` mengalihkan ke `/login` | BELUM DICEK | BELUM DICEK | `src/app/not-found.tsx` baru |
 
 Route tanpa tampilan: `/auth/callback` (menukar code, memanggil `pastikan_editor()`, lalu ke `/` atau `/login?error=...`) dan `/api/dev-login` (404 di produksi). Keduanya dicek lewat langkah 9 di `docs/deploy.md`.
 
@@ -250,7 +256,7 @@ Semua BELUM DIJALANKAN. Jalankan dengan `.env.local` berisi key project dev dan 
 | 2 | Email Google lain ditolak | Sama dengan nomor 1. Callback memanggil `signOut()` lalu ke `/login?error=bukan-editor` | `tests/db/akses.test.ts` ("orang luar tidak bisa membaca apa pun", "email di allowlist tapi belum terkonfirmasi bukan editor", "anon tidak bisa memanggil pastikan_editor"), `tests/e2e/login.spec.ts` ("email di luar allowlist ditolak dengan pesan") | BELUM DIVERIFIKASI |
 | 3 | Semua vendor Lamaran yang sudah ada bisa diinput lengkap dengan Kontrak dan Pembayarannya | `28b8b18`, `f865d47`, `5f870ee`, `0274cf3`, `217e632`, `6798fa1`, `c7dc219`, `13dd3f3`. Migration `0002_vendor.sql`, `0003_keuangan.sql`, halaman `src/app/(app)/vendor/**` | `tests/e2e/vendor.spec.ts`, `paket.spec.ts`, `pembayaran.spec.ts`, `tests/db/vendor.test.ts`, `paket.test.ts`, `keuangan.test.ts`, `kontrak-fungsi.test.ts` | BELUM DIVERIFIKASI. Butuh Rendy menginput data vendor Lamaran yang asli |
 | 4 | Komparasi menampilkan minimal tiga Paket dari Vendor berbeda secara sejajar per Komponen, dan terbaca di layar HP | `481ee0f`. `src/app/(app)/komparasi/[kategoriId]/page.tsx`, `.tabel-geser` dan `.tabel-komparasi` di `globals.css` | `tests/e2e/komparasi.spec.ts` ("375px: baris berurutan, sel kosong, geser horizontal hanya di tabel, label tetap terlihat", memakai Paket A, B, C) | BELUM DIVERIFIKASI |
-| 5 | Pembayaran Terjadwal yang lewat Jatuh Tempo muncul di kelompok Terlambat | `fded50d`, `bf9ae6a`. View `agenda` di `0004_tugas.sql`, `kelompokJatuhTempo()` di `src/lib/tanggal.ts`, `src/app/(app)/page.tsx` | `tests/unit/tanggal.test.ts` ("mengelompokkan tanggal jatuh tempo"), `tests/db/agenda.test.ts` ("pembayaran terjadwal tampil..."), `tests/e2e/dashboard.spec.ts`. **Celah**: e2e kelompok Terlambat hanya memakai Tugas. Pembayaran hanya diuji di kelompok Hari ini. Pengelompokan memakai fungsi yang sama untuk keduanya | BELUM DIVERIFIKASI. Disarankan menambah satu kasus e2e Pembayaran Terjadwal dengan Jatuh Tempo kemarin |
+| 5 | Pembayaran Terjadwal yang lewat Jatuh Tempo muncul di kelompok Terlambat | `fded50d`, `bf9ae6a`. View `agenda` di `0004_tugas.sql`, `kelompokJatuhTempo()` di `src/lib/tanggal.ts`, `src/app/(app)/page.tsx` | `tests/unit/tanggal.test.ts` ("mengelompokkan tanggal jatuh tempo"), `tests/db/agenda.test.ts` ("pembayaran terjadwal tampil..."), `tests/e2e/dashboard.spec.ts` ("pembayaran terjadwal yang lewat jatuh tempo masuk kelompok terlambat": Pelunasan dengan Jatuh Tempo kemarin, tanggal Jakarta, tampil di Terlambat dengan judul "Pelunasan Uji Venue Agenda" dan "Rp 5.000.000"). Celah sebelumnya (e2e Terlambat hanya memakai Tugas) sudah ditutup di kode | BELUM DIVERIFIKASI. Test baru belum dijalankan |
 | 6 | Rekap Kontribusi per Pihak sama dengan hasil hitung manual | `c7dc219`. View `kontribusi_pihak` dan `kontribusi_pihak_vendor` di `0003_keuangan.sql`, `src/app/(app)/kontribusi/page.tsx` | `tests/db/keuangan.test.ts` ("kontribusi per pihak"), `tests/e2e/pembayaran.spec.ts` ("DP dibayar, ... dan kontribusi") | BELUM DIVERIFIKASI. Butuh Rendy membandingkan dengan hitungan manual dari data asli |
 | 7 | Share Link tanpa centang Keuangan tidak memuat nominal apa pun, termasuk di response API | `5e311f7`, `957ce5e`, `1279d4f`. `baca_share_link()` di `0005_share_link.sql`, `src/app/s/[token]/page.tsx`, `src/lib/supabase/anon.ts` | `tests/db/share.test.ts` ("tanpa keuangan...", "kunci hasil persis sesuai bagian"), `tests/e2e/share.spec.ts` ("share link default tanpa keuangan...", mengecek teks halaman dan response mentah tidak memuat "Rp") | BELUM DIVERIFIKASI. Teks bebas (judul Tugas, nama vendor, lokasi) tetap tampil apa adanya, dan form sudah memperingatkan hal ini |
 | 8 | Lolos Delivery Gate antislop | Laporan ini | Bagian 1 sampai 4 | BELUM LULUS |
@@ -260,8 +266,15 @@ Semua BELUM DIJALANKAN. Jalankan dengan `.env.local` berisi key project dev dan 
 ### FAIL yang ditemukan dan belum diperbaiki
 
 1. **Kontras placeholder bergantung browser.** Warna `::placeholder` tidak diatur. Nilai bawaan WebKit (`darkGray`, 2.35:1) dan Firefox (3.49:1) gagal 4.5:1 di atas `#fff`. Perbaikannya butuh satu warna netral baru (contoh `#6b5e60`, 6.19:1) yang tetap terlihat berbeda dari isian asli. Ini keputusan desain, jadi tidak diubah di commit ini.
-2. **Halaman 404 bawaan Next.js berbahasa Inggris.** Tidak ada `src/app/not-found.tsx`, jadi URL yang salah dan `/acara/{id}` yang tidak ada menampilkan teks Inggris. Saran: tambah `src/app/not-found.tsx` dengan pesan Indonesia dan link ke `/`, atau `not-found.tsx` di `(app)/acara/[id]/` seperti di `vendor/[id]`.
-3. **Filter Tugas belum sesuai PRD.** PRD Fase 1 menyebut "Daftar Tugas bisa difilter per PIC, Acara, dan Vendor". Halaman `/tugas` hanya punya filter PIC dan Status. Bukan bagian dari kriteria selesai, tetapi masuk scope Fase 1.
+
+### FAIL dan celah yang sudah diperbaiki di kode (BELUM DIVERIFIKASI)
+
+Diperbaiki di commit "fix: tutup celah delivery gate fase 1". Hanya dicek sintaksnya, belum dijalankan di browser atau lewat test.
+
+1. **Halaman 404 bawaan Next.js berbahasa Inggris.** Ditambah `src/app/not-found.tsx`: judul "Rendy & Dinar", pesan "Halaman tidak ditemukan.", link "Kembali ke dashboard" ke `/`. Memakai class baru `.halaman-mandiri` (lebar dan padding sama dengan `.halaman-pembaca`), tanpa navigasi bawah. `not-found.tsx` yang sudah ada di `vendor/[id]`, `vendor/[id]/paket`, dan `komparasi/[kategoriId]` tidak diubah. Catatan: `/acara/{id}` yang tidak ada sekarang tampil tanpa navigasi bawah, karena boundary-nya di root. Kalau ingin navigasi tetap tampil, tambah `not-found.tsx` di `(app)/acara/[id]/`.
+2. **Filter Tugas belum sesuai PRD.** `/tugas` sekarang punya filter PIC, Acara, Vendor, dan Status (`?pic=&acara=&vendor=&status=`). Id Acara dan Vendor dicek dengan `adalahUuid()`, nilai lain diabaikan. Keduanya ikut dihitung di `adaFilter`, jadi tampilan kosong menawarkan "Hapus filter". Pilihan Acara diurutkan per tanggal lalu nama, Vendor per nama, sama dengan form Tugas. Class `.filter-dua` diganti `.filter-empat`: satu kolom di bawah 560px, dua kolom di atasnya dengan "Terapkan" di baris sendiri. Test baru di `tugas.spec.ts`: "filter vendor..." dan "filter acara...".
+3. **E2E Pembayaran Terjadwal di kelompok Terlambat.** `dashboard.spec.ts` menambah kasus Pelunasan dengan Jatuh Tempo kemarin (tanggal Jakarta). Helper `pelunasanHariIni()` diganti `pelunasanTerjadwal(geserHari = 0)`, hitungan dasar dan pembersihan memakai cara yang sudah ada.
+4. **Tap target link alamat web vendor.** Diberi `tautan-aksi` di `vendor/[id]/page.tsx`.
 
 ### Perbaikan kecil di commit ini
 

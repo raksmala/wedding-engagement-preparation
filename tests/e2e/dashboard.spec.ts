@@ -65,8 +65,9 @@ async function buatTugas(judul: string, geserHari: number): Promise<void> {
   if (error) throw error;
 }
 
-// Vendor Booked lewat pilih_paket dengan total Rp 8.500.000, lalu Pelunasan Rp 5.000.000 Terjadwal hari ini.
-async function pelunasanHariIni(): Promise<string> {
+// Vendor Booked lewat pilih_paket dengan total Rp 8.500.000, lalu Pelunasan Rp 5.000.000 Terjadwal
+// dengan Jatuh Tempo hari ini digeser geserHari (tanggal Jakarta).
+async function pelunasanTerjadwal(geserHari = 0): Promise<string> {
   const { data: v, error } = await editor
     .from('vendor')
     .insert({ nama: 'Uji Venue Agenda', kategori_vendor_id: await idByNama('kategori_vendor', 'Venue') })
@@ -92,7 +93,7 @@ async function pelunasanHariIni(): Promise<string> {
     jenis: 'pelunasan',
     nominal: 5000000,
     status: 'terjadwal',
-    jatuh_tempo: tanggalJakarta(),
+    jatuh_tempo: tanggalJakarta(geserHari),
   });
   if (e6) throw e6;
   return v.id;
@@ -104,7 +105,7 @@ const item = (page: Page, judul: string) => page.getByRole('listitem').filter({ 
 test('dashboard mengelompokkan terlambat, hari ini, dan 7 hari ke depan', async ({ page }) => {
   const dasar = await dasarKelompok();
   await buatTugas('Uji Lewat Tempo', -2);
-  await pelunasanHariIni();
+  await pelunasanTerjadwal();
   await buatTugas('Uji Lima Hari', 5);
   await buatTugas('Uji Sepuluh Hari', 10);
 
@@ -122,6 +123,23 @@ test('dashboard mengelompokkan terlambat, hari ini, dan 7 hari ke depan', async 
   await expect(pelunasan.getByRole('link', { name: 'Uji Venue Agenda' })).toBeVisible();
   await expect(kelompok(page, /^7 hari ke depan/).getByText('Uji Lima Hari')).toBeVisible();
   await expect(page.getByText('Uji Sepuluh Hari')).toHaveCount(0);
+});
+
+test('pembayaran terjadwal yang lewat jatuh tempo masuk kelompok terlambat', async ({ page }) => {
+  const dasar = await dasarKelompok();
+  const vendorId = await pelunasanTerjadwal(-1);
+
+  await page.goto('/');
+  const terlambat = kelompok(page, /^Terlambat/);
+  await expect(terlambat.getByRole('heading')).toHaveText(`Terlambat (${dasar.terlambat + 1})`);
+  await expect(kelompok(page, /^Hari ini/).getByRole('heading')).toHaveText(`Hari ini (${dasar.hariIni})`);
+  const pelunasan = terlambat.getByRole('listitem').filter({ hasText: 'Pelunasan Uji Venue Agenda' });
+  await expect(pelunasan).toContainText('Rp 5.000.000');
+  await expect(pelunasan).toContainText('Terlambat');
+  await expect(pelunasan).toContainText('Pembayaran Terjadwal');
+  await expect(pelunasan.getByRole('link', { name: 'Uji Venue Agenda' })).toHaveAttribute('href', `/vendor/${vendorId}`);
+  await expect(pelunasan.getByRole('button', { name: /Tandai dibayar/ })).toBeVisible();
+  await expect(kelompok(page, /^Hari ini/).getByText('Pelunasan Uji Venue Agenda')).toHaveCount(0);
 });
 
 test('selesai di tugas terlambat menghilangkan item dan mengurangi hitungan terlambat', async ({ page }) => {
@@ -147,7 +165,7 @@ test('selesai di tugas terlambat menghilangkan item dan mengurangi hitungan terl
 });
 
 test('tandai dibayar dari dashboard menghilangkan item dan mengurangi sisa tagihan', async ({ page }) => {
-  const vendorId = await pelunasanHariIni();
+  const vendorId = await pelunasanTerjadwal();
   const sisa = page.getByRole('region', { name: 'Kontrak' }).locator('dl.ringkasan div', { hasText: 'Sisa Tagihan' });
   await page.goto(`/vendor/${vendorId}`);
   await expect(sisa).toContainText('Rp 8.500.000');
@@ -228,7 +246,7 @@ test('navigasi bawah menandai halaman aktif dan menu lainnya hanya berisi halama
 test('dashboard 375px tanpa scroll horizontal, tap target 44px, dan isi tidak tertutup navigasi', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   await buatTugas('Uji Lewat Tempo Dengan Judul Yang Cukup Panjang Untuk Layar Sempit', -1);
-  await pelunasanHariIni();
+  await pelunasanTerjadwal();
   await buatTugas('Uji Lima Hari', 5);
   await page.goto('/');
 

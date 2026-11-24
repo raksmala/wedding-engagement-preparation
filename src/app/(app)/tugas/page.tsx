@@ -23,10 +23,14 @@ export default async function TugasPage({
   const sp = await searchParams;
   const picParam = satu(sp.pic);
   const statusParam = satu(sp.status);
+  const acaraParam = satu(sp.acara);
+  const vendorParam = satu(sp.vendor);
   const picId = picParam && adalahUuid(picParam) ? picParam : '';
+  const acaraId = acaraParam && adalahUuid(acaraParam) ? acaraParam : '';
+  const vendorId = vendorParam && adalahUuid(vendorParam) ? vendorParam : '';
   const status: FilterStatus =
     statusParam && Object.hasOwn(FILTER_STATUS, statusParam) ? (statusParam as FilterStatus) : 'belum';
-  const adaFilter = !!picId || status !== 'belum';
+  const adaFilter = !!(picId || acaraId || vendorId) || status !== 'belum';
 
   const supabase = await createClient();
 
@@ -36,6 +40,8 @@ export default async function TugasPage({
       'id, judul, catatan, pic_id, jatuh_tempo, status, selesai_pada, diubah_pada, diubah_oleh, vendor(id, nama), acara(id, nama), log_kontak(tanggal)',
     );
   if (picId) kueri = kueri.eq('pic_id', picId);
+  if (acaraId) kueri = kueri.eq('acara_id', acaraId);
+  if (vendorId) kueri = kueri.eq('vendor_id', vendorId);
   if (status !== 'semua') kueri = kueri.eq('status', status);
   // Belum selesai: Jatuh Tempo terdekat dulu, tanpa Jatuh Tempo di akhir. Selesai: yang terbaru dulu.
   kueri =
@@ -75,7 +81,7 @@ export default async function TugasPage({
     <>
       <JudulHalaman judul="Tugas" />
 
-      <form method="get" action="/tugas" className="filter filter-dua" role="search" aria-label="Filter tugas">
+      <form method="get" action="/tugas" className="filter filter-empat" role="search" aria-label="Filter tugas">
         <label>
           PIC
           <select name="pic" defaultValue={picId}>
@@ -83,6 +89,28 @@ export default async function TugasPage({
             {editor.data.map((e) => (
               <option key={e.id} value={e.id}>
                 {e.nama}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Acara
+          <select name="acara" defaultValue={acaraId}>
+            <option value="">Semua acara</option>
+            {acara.data.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.nama}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Vendor
+          <select name="vendor" defaultValue={vendorId}>
+            <option value="">Semua vendor</option>
+            {vendor.data.map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.nama}
               </option>
             ))}
           </select>
