@@ -247,6 +247,7 @@ test('kontrak manual untuk vendor tanpa paket, minimal satu alokasi', async ({ p
   const k = kontrak(page);
   await expect(k.locator('dl.ringkasan div', { hasText: 'Total' }).first()).toContainText('Rp 8.000.000');
   await expect(k).toContainText('1 Desember 2026');
+  await expect(page.getByTestId('status-vendor')).toHaveText('Booked');
   await expect(k.getByText('Belum lunas')).toBeVisible();
 });
 
