@@ -54,15 +54,19 @@ export default async function PengaturanPage() {
       </p>
 
       <section className="bagian" aria-labelledby="judul-pihak">
-        <h2 id="judul-pihak">Pihak</h2>
+        <h2 id="judul-pihak" tabIndex={-1}>
+          Pihak
+        </h2>
         <p className="teks-lembut">Sumber dana atau pembeli, dipilih saat menandai pembayaran Dibayar.</p>
-        <DaftarPengaturan jenis="pihak" daftar={daftarPihak} />
+        <DaftarPengaturan jenis="pihak" daftar={daftarPihak} judulId="judul-pihak" />
       </section>
 
       <section className="bagian" aria-labelledby="judul-kategori">
-        <h2 id="judul-kategori">Kategori Vendor</h2>
+        <h2 id="judul-kategori" tabIndex={-1}>
+          Kategori Vendor
+        </h2>
         <p className="teks-lembut">Jenis layanan vendor. Setiap vendor punya satu kategori.</p>
-        <DaftarPengaturan jenis="kategori" daftar={daftarKategori} />
+        <DaftarPengaturan jenis="kategori" daftar={daftarKategori} judulId="judul-kategori" />
       </section>
 
       <section className="bagian" aria-labelledby="judul-komponen">

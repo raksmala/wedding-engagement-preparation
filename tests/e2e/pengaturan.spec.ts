@@ -28,8 +28,16 @@ async function bersihkan() {
   await hapusDataUji();
   const { error: e1 } = await admin.from('pihak').delete().like('nama', 'Uji %');
   if (e1) throw e1;
-  const { error: e2 } = await admin.from('kategori_vendor').delete().like('nama', 'Uji %');
+  // komponen.kategori_vendor_id memakai on delete restrict, jadi Komponen di Kategori uji dihapus lebih dulu.
+  const { data: kategori, error: e2 } = await admin.from('kategori_vendor').select('id').like('nama', 'Uji %');
   if (e2) throw e2;
+  const ids = (kategori ?? []).map((k) => k.id);
+  if (ids.length > 0) {
+    const { error: e3 } = await admin.from('komponen').delete().in('kategori_vendor_id', ids);
+    if (e3) throw e3;
+  }
+  const { error: e4 } = await admin.from('kategori_vendor').delete().like('nama', 'Uji %');
+  if (e4) throw e4;
 }
 
 test.beforeAll(async () => {
@@ -211,6 +219,8 @@ test('tambah Pihak, nama kosong dan ganda ditolak, yang dipakai tidak bisa dihap
   await expect(dialog.getByRole('button', { name: 'Batal' })).toBeFocused();
   await dialog.getByRole('button', { name: 'Hapus' }).click();
   await expect(baris(pihak, 'Uji Pihak Baru')).toHaveCount(0);
+  // Tombol Hapus ikut hilang, jadi fokus pindah ke judul section.
+  await expect(page.getByRole('heading', { level: 2, name: 'Pihak', exact: true })).toBeFocused();
   const { data: sisa } = await admin.from('pihak').select('id').eq('nama', 'Uji Pihak Baru');
   expect(sisa).toEqual([]);
 });

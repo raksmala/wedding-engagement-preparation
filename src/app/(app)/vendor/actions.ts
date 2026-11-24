@@ -57,6 +57,37 @@ export async function simpanVendor(formData: FormData): Promise<HasilSimpanVendo
   const acaraId = [...new Set(nilai.acara_id)];
 
   const supabase = await createClient();
+
+  // Kategori yang diarsipkan hanya boleh tetap dipakai oleh Vendor yang sudah memakainya.
+  const { data: kategori, error: eKategori } = await supabase
+    .from('kategori_vendor')
+    .select('arsip')
+    .eq('id', nilai.kategori_vendor_id)
+    .maybeSingle();
+  if (eKategori) {
+    console.error('simpanVendor:', eKategori.message);
+    return gagal('Vendor belum tersimpan. Coba lagi.');
+  }
+  if (!kategori) return gagal('Kategori atau acara yang dipilih tidak ditemukan.');
+  if (kategori.arsip) {
+    let kategoriLama: string | null = null;
+    if (id) {
+      const { data: lama, error: eLama } = await supabase
+        .from('vendor')
+        .select('kategori_vendor_id')
+        .eq('id', id)
+        .maybeSingle();
+      if (eLama) {
+        console.error('simpanVendor:', eLama.message);
+        return gagal('Vendor belum tersimpan. Coba lagi.');
+      }
+      kategoriLama = lama?.kategori_vendor_id ?? null;
+    }
+    if (kategoriLama !== nilai.kategori_vendor_id) {
+      return gagal('Kategori ini sudah diarsipkan. Pilih kategori lain.');
+    }
+  }
+
   const { data: vendorId, error } = await supabase.rpc('simpan_vendor', {
     // null berarti vendor baru; tipe hasil generate tidak mengizinkan null.
     p_id: id as string,

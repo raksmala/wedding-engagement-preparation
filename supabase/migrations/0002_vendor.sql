@@ -13,6 +13,8 @@ create table kategori_vendor (
   diubah_pada timestamptz not null default now(),
   diubah_oleh uuid references editor (id) on delete set null
 );
+-- Nama Kategori Vendor unik tanpa membedakan huruf besar kecil.
+create unique index kategori_vendor_nama_lower_idx on kategori_vendor (lower(nama));
 
 create table vendor (
   id uuid primary key default gen_random_uuid(),
@@ -149,7 +151,8 @@ create type status_paket as enum ('aktif', 'dipilih', 'tidak_dipilih');
 
 create table komponen (
   id uuid primary key default gen_random_uuid(),
-  kategori_vendor_id uuid not null references kategori_vendor (id) on delete cascade,
+  -- Kategori yang sudah punya Komponen tidak bisa dihapus, hanya diarsipkan.
+  kategori_vendor_id uuid not null references kategori_vendor (id) on delete restrict,
   nama text not null check (btrim(nama) <> ''),
   tipe tipe_komponen not null,
   satuan text,

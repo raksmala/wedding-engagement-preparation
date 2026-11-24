@@ -36,10 +36,11 @@ function segarkan() {
   revalidatePath('/', 'layout');
 }
 
+// Satu helper untuk dua tabel aman karena kolom pihak dan kategori_vendor sama persis (id, nama, urutan, arsip,
+// kolom audit). createClient() tidak memakai tipe Database, jadi kueri ini memang tidak dicek per tabel oleh TypeScript.
 async function klien(tabel: Tabel) {
   const supabase = await createClient();
-  // Kedua tabel punya kolom yang sama (id, nama, urutan, arsip, audit), jadi tipe pihak dipakai untuk keduanya.
-  return { supabase, dari: () => supabase.from(tabel as 'pihak') };
+  return { dari: () => supabase.from(tabel) };
 }
 
 async function simpan(tabel: Tabel, formData: FormData): Promise<HasilSimpanPengaturan> {
@@ -54,7 +55,7 @@ async function simpan(tabel: Tabel, formData: FormData): Promise<HasilSimpanPeng
 
   const { dari } = await klien(tabel);
 
-  // Unik di DB peka huruf besar kecil. Di sini "om budi" dan "Om Budi" dianggap sama.
+  // Dicek di sini supaya pesannya jelas. Index unik lower(nama) di DB tetap menjaga kalau dua simpan terjadi bersamaan (23505).
   const { data: semua, error: eSemua } = await dari().select('id, nama, urutan');
   if (eSemua) {
     console.error(`simpan ${tabel}:`, eSemua.message);
@@ -98,22 +99,9 @@ async function ubahArsip(tabel: Tabel, id: string, arsip: boolean): Promise<{ er
 
 async function hapus(tabel: Tabel, id: string): Promise<{ error?: string }> {
   if (!adalahUuid(id)) return { error: TIDAK_DITEMUKAN };
-  const { supabase, dari } = await klien(tabel);
+  const { dari } = await klien(tabel);
 
-  if (tabel === 'kategori_vendor') {
-    // komponen.kategori_vendor_id memakai on delete cascade, jadi dicek di sini supaya Komponen tidak ikut hilang.
-    const { count, error } = await supabase
-      .from('komponen')
-      .select('id', { count: 'exact', head: true })
-      .eq('kategori_vendor_id', id);
-    if (error) {
-      console.error('hapus kategori_vendor:', error.message);
-      return { error: PESAN[tabel].gagalHapus };
-    }
-    if ((count ?? 0) > 0) return { error: PESAN[tabel].dipakai };
-  }
-
-  // Vendor, Pembayaran, dan Editor yang memakai baris ini menolak hapus lewat foreign key (23503).
+  // Vendor, Komponen, Pembayaran, dan Editor yang memakai baris ini menolak hapus lewat foreign key (23503).
   const { data, error } = await dari().delete().eq('id', id).select('id');
   if (error) {
     console.error(`hapus ${tabel}:`, error.message);

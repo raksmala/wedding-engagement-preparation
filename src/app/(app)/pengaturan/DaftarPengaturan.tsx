@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState, useEffect, useRef, useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
+import { flushSync } from 'react-dom';
 import { Kosong } from '@/components/Kosong';
 import {
   aktifkanKategori,
@@ -46,24 +46,46 @@ const AKSI = {
 
 const PANJANG_MAKS = 60;
 
-export function DaftarPengaturan({ jenis, daftar }: { jenis: JenisPengaturan; daftar: ItemPengaturan[] }) {
-  const router = useRouter();
+// Server Action di actions.ts memanggil revalidatePath, jadi daftar ikut segar tanpa router.refresh().
+export function DaftarPengaturan({
+  jenis,
+  daftar,
+  judulId,
+}: {
+  jenis: JenisPengaturan;
+  daftar: ItemPengaturan[];
+  // id judul section (tabIndex -1), tujuan fokus setelah baris dihapus.
+  judulId: string;
+}) {
   const dialog = useRef<HTMLDialogElement>(null);
   const tombolBatal = useRef<HTMLButtonElement>(null);
   const [target, setTarget] = useState<ItemPengaturan>();
   const [galat, setGalat] = useState<string>();
+  // Baris yang sedang diarsipkan atau diaktifkan lagi.
+  const [diproses, setDiproses] = useState<string>();
   const [memproses, mulai] = useTransition();
   const aksi = AKSI[jenis];
   const adaAktif = daftar.some((i) => !i.arsip);
 
-  function jalankan(fn: () => Promise<{ error?: string }>) {
+  function ubahArsip(item: ItemPengaturan) {
     if (memproses) return;
     setGalat(undefined);
+    setDiproses(item.id);
     mulai(async () => {
-      const hasil = await fn();
+      const hasil = await (item.arsip ? aksi.aktifkan(item.id) : aksi.arsipkan(item.id));
       if (hasil.error) setGalat(hasil.error);
-      else router.refresh();
+      setDiproses(undefined);
     });
+  }
+
+  function mintaHapus(item: ItemPengaturan) {
+    // Isi dialog harus sudah berisi nama baris ini sebelum dibuka, supaya pembaca layar membacakan nama yang benar.
+    flushSync(() => {
+      setTarget(item);
+      setGalat(undefined);
+    });
+    dialog.current?.showModal();
+    tombolBatal.current?.focus();
   }
 
   function hapus() {
@@ -71,9 +93,13 @@ export function DaftarPengaturan({ jenis, daftar }: { jenis: JenisPengaturan; da
     const id = target.id;
     mulai(async () => {
       const hasil = await aksi.hapus(id);
-      if (hasil.error) setGalat(hasil.error);
-      else router.refresh();
       dialog.current?.close();
+      if (hasil.error) {
+        setGalat(hasil.error);
+        return;
+      }
+      // Baris dan tombol Hapus-nya hilang, jadi fokus pindah ke judul section.
+      document.getElementById(judulId)?.focus();
     });
   }
 
@@ -94,13 +120,9 @@ export function DaftarPengaturan({ jenis, daftar }: { jenis: JenisPengaturan; da
               key={item.id}
               jenis={jenis}
               item={item}
-              ubahArsip={() => jalankan(() => (item.arsip ? aksi.aktifkan(item.id) : aksi.arsipkan(item.id)))}
-              mintaHapus={() => {
-                setTarget(item);
-                setGalat(undefined);
-                dialog.current?.showModal();
-                tombolBatal.current?.focus();
-              }}
+              sibuk={memproses && diproses === item.id}
+              ubahArsip={() => ubahArsip(item)}
+              mintaHapus={() => mintaHapus(item)}
             />
           ))}
         </ul>
@@ -136,11 +158,13 @@ export function DaftarPengaturan({ jenis, daftar }: { jenis: JenisPengaturan; da
 function BarisItem({
   jenis,
   item,
+  sibuk,
   ubahArsip,
   mintaHapus,
 }: {
   jenis: JenisPengaturan;
   item: ItemPengaturan;
+  sibuk: boolean;
   ubahArsip: () => void;
   mintaHapus: () => void;
 }) {
@@ -195,10 +219,11 @@ function BarisItem({
         <button
           type="button"
           className="tombol-sekunder"
-          aria-label={`${item.arsip ? 'Aktifkan lagi' : 'Arsipkan'} ${item.nama}`}
+          aria-label={sibuk ? `Menyimpan ${item.nama}` : `${item.arsip ? 'Aktifkan lagi' : 'Arsipkan'} ${item.nama}`}
+          aria-busy={sibuk}
           onClick={ubahArsip}
         >
-          {item.arsip ? 'Aktifkan lagi' : 'Arsipkan'}
+          {sibuk ? 'Menyimpan...' : item.arsip ? 'Aktifkan lagi' : 'Arsipkan'}
         </button>
         {item.pemakaian === null && (
           <button type="button" className="tombol-bahaya" aria-label={`Hapus ${item.nama}`} onClick={mintaHapus}>

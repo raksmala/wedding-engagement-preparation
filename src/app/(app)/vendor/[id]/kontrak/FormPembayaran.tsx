@@ -12,12 +12,15 @@ export function FormPembayaran({
   pihak,
   hariIni,
   awal,
+  namaPihakAwal,
   selesai,
 }: {
   kontrakId: string;
   pihak: PihakPilihan[];
   hariIni: string;
   awal?: NilaiPembayaran;
+  // Nama Pihak yang dipakai baris ini, untuk Pihak yang sudah diarsipkan dan tidak ada di daftar pilihan.
+  namaPihakAwal?: string | null;
   selesai: () => void;
 }) {
   const [hasil, aksi, memproses] = useActionState(
@@ -35,7 +38,7 @@ export function FormPembayaran({
   // Pihak yang sudah diarsipkan tetap bisa dipilih kalau baris ini memakainya.
   const opsiPihak =
     awal?.pihak_id && !pihak.some((p) => p.id === awal.pihak_id)
-      ? [...pihak, { id: awal.pihak_id, nama: 'Pihak diarsipkan' }]
+      ? [...pihak, { id: awal.pihak_id, nama: `${namaPihakAwal ?? 'Pihak'} (diarsipkan)` }]
       : pihak;
 
   return (

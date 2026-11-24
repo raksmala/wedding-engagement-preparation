@@ -203,6 +203,37 @@ export async function simpanPembayaran(formData: FormData): Promise<HasilPembaya
   };
 
   const supabase = await createClient();
+
+  // Pihak yang diarsipkan hanya boleh tetap dipakai oleh Pembayaran yang sudah memakainya.
+  if (dibayar) {
+    const { data: pihak, error: ePihak } = await supabase
+      .from('pihak')
+      .select('arsip')
+      .eq('id', nilai.pihak_id)
+      .maybeSingle();
+    if (ePihak) {
+      console.error('simpanPembayaran:', ePihak.message);
+      return gagal('Pembayaran belum tersimpan. Coba lagi.');
+    }
+    if (!pihak) return gagal(PESAN_PIHAK);
+    if (pihak.arsip) {
+      let pihakLama: string | null = null;
+      if (nilai.id) {
+        const { data: lama, error: eLama } = await supabase
+          .from('pembayaran')
+          .select('pihak_id')
+          .eq('id', nilai.id)
+          .maybeSingle();
+        if (eLama) {
+          console.error('simpanPembayaran:', eLama.message);
+          return gagal('Pembayaran belum tersimpan. Coba lagi.');
+        }
+        pihakLama = lama?.pihak_id ?? null;
+      }
+      if (pihakLama !== nilai.pihak_id) return gagal('Pihak ini sudah diarsipkan. Pilih pihak lain.');
+    }
+  }
+
   if (nilai.id) {
     const { data, error } = await supabase
       .from('pembayaran')

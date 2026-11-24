@@ -18,6 +18,8 @@ create table pihak (
   diubah_pada timestamptz not null default now(),
   diubah_oleh uuid
 );
+-- Nama Pihak unik tanpa membedakan huruf besar kecil: "om budi" dan "Om Budi" dianggap sama.
+create unique index pihak_nama_lower_idx on pihak (lower(nama));
 
 create table editor (
   id uuid primary key default gen_random_uuid(),

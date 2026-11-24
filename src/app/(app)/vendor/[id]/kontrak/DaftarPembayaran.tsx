@@ -92,6 +92,7 @@ export function DaftarPembayaran({
                     pihak={pihak}
                     hariIni={hariIni}
                     awal={awalDari(b, kontrakId)}
+                    namaPihakAwal={b.pihak_nama}
                     selesai={tutup}
                   />
                 </li>
