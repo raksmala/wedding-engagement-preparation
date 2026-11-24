@@ -15,6 +15,26 @@ function selisihHari(dari: string, ke: string): number {
   return Math.round((Date.parse(ke) - Date.parse(dari)) / HARI_MS);
 }
 
+const NAMA_BULAN = [
+  'Januari',
+  'Februari',
+  'Maret',
+  'April',
+  'Mei',
+  'Juni',
+  'Juli',
+  'Agustus',
+  'September',
+  'Oktober',
+  'November',
+  'Desember',
+];
+
+export function formatTanggal(tanggal: string): string {
+  const [tahun, bulan, hari] = tanggal.split('-').map(Number);
+  return `${hari} ${NAMA_BULAN[bulan - 1]} ${tahun}`;
+}
+
 export function kelompokJatuhTempo(
   jatuhTempo: string | null,
   hariIni: string,

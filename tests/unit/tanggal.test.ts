@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { hariIniJakarta, kelompokJatuhTempo } from '@/lib/tanggal';
+import { formatTanggal, hariIniJakarta, kelompokJatuhTempo } from '@/lib/tanggal';
 
 describe('hariIniJakarta', () => {
   test('memakai zona Asia/Jakarta', () => {
@@ -14,5 +14,13 @@ describe('kelompokJatuhTempo', () => {
     expect(kelompokJatuhTempo('2026-12-02', '2026-11-25')).toBe('tujuh_hari');
     expect(kelompokJatuhTempo('2026-12-03', '2026-11-25')).toBeNull();
     expect(kelompokJatuhTempo(null, '2026-11-25')).toBeNull();
+  });
+});
+
+describe('formatTanggal', () => {
+  test('memakai nama bulan Indonesia', () => {
+    expect(formatTanggal('2026-12-20')).toBe('20 Desember 2026');
+    expect(formatTanggal('2027-01-01')).toBe('1 Januari 2027');
+    expect(formatTanggal('2026-08-17')).toBe('17 Agustus 2026');
   });
 });

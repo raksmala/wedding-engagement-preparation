@@ -3,6 +3,9 @@
   --primary: #80172c;
   --surface: #ecb6b6;
   --accent: #60692d;
+  --teks: #2b2325;
+  --teks-lembut: #4a3f41;
+  --garis: #8a7a7d;
   --font-judul: var(--font-cormorant), "Cormorant Garamond", Georgia, serif;
   --font-isi: var(--font-source-sans), "Source Sans 3", system-ui, sans-serif;
 }
@@ -18,7 +21,7 @@ html {
 body {
   margin: 0;
   background: var(--bg);
-  color: var(--primary);
+  color: var(--teks);
   font-family: var(--font-isi);
   font-size: 1rem;
   line-height: 1.5;
@@ -91,4 +94,133 @@ a {
   border: 1px solid var(--primary);
   border-radius: 4px;
   font-weight: 600;
+}
+
+.teks-lembut {
+  color: var(--teks-lembut);
+}
+
+a.tombol-utama {
+  text-decoration: none;
+}
+
+.daftar-kartu {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kartu {
+  padding: 1rem;
+  border: 1px solid var(--garis);
+  border-radius: 4px;
+}
+
+.kartu h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+
+.kartu p {
+  margin: 0 0 0.5rem;
+  overflow-wrap: anywhere;
+}
+
+.tautan-aksi {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 600;
+}
+
+.kosong {
+  padding: 1.5rem 1rem;
+  border: 1px solid var(--garis);
+  border-radius: 4px;
+}
+
+.kosong p {
+  margin: 0 0 1rem;
+}
+
+.form {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.form label {
+  display: grid;
+  gap: 0.25rem;
+  font-weight: 600;
+}
+
+.form input,
+.form select,
+.form textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--garis);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--teks);
+  font: inherit;
+  font-weight: 400;
+}
+
+.tombol-bahaya,
+.tombol-sekunder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 1.25rem;
+  border-radius: 4px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tombol-bahaya {
+  border: 1px solid var(--primary);
+  background: transparent;
+  color: var(--primary);
+}
+
+.tombol-sekunder {
+  border: 1px solid var(--garis);
+  background: transparent;
+  color: var(--teks);
+}
+
+.tombol-bahaya:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+.dialog {
+  width: min(92vw, 420px);
+  padding: 1.25rem;
+  border: 1px solid var(--primary);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--teks);
+}
+
+.dialog::backdrop {
+  background: rgb(43 35 37 / 0.5);
+}
+
+.dialog h2 {
+  margin: 0 0 0.5rem;
+}
+
+.baris-tombol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
 }

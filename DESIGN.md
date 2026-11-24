@@ -28,6 +28,9 @@ Hanya mode terang. Palet dibangun dari warna terang `#f5efef`, dan mode gelap bu
 | `--primary` | `#80172c` | Teks judul, tombol utama, link, status Terlambat (selalu dengan label teks) | 8.9:1 di atas `--bg`. Teks putih di atasnya 10.1:1 |
 | `--surface` | `#ecb6b6` | Kartu terpilih, highlight, chip | 1.6:1 di atas `--bg`, jadi tidak boleh untuk teks. Teks `--primary` di atasnya 5.7:1 |
 | `--accent` | `#60692d` | Aksen tunggal: status positif (Lunas, Booked, Selesai) | 5.2:1 di atas `--bg` |
+| `--teks` | `#2b2325` | Teks isi. Netral hangat, tanpa hue baru | 13.49:1 di atas `--bg`, 8.71:1 di atas `--surface` |
+| `--teks-lembut` | `#4a3f41` | Teks sekunder (tanggal, keterangan). Lebih terang dari `--teks` tapi tetap lolos AA di dua latar | 8.89:1 di atas `--bg`, 5.74:1 di atas `--surface` |
+| `--garis` | `#8a7a7d` | Border kartu dan input. Bukan teks | 3.58:1 di atas `--bg` (batas 3:1 untuk batas komponen UI) |
 
 Aturan:
 - Status negatif tidak memakai warna baru. Terlambat dan Belum bayar memakai `--primary` dengan label teks, supaya palet tetap 3 warna inti ditambah 1 aksen.
