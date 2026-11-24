@@ -105,8 +105,8 @@ export default async function KomponenPage({
         </>
       )}
       <p>
-        <Link href="/vendor" className="tautan-aksi">
-          Kembali ke daftar vendor
+        <Link href="/pengaturan" className="tautan-aksi">
+          Kembali ke pengaturan
         </Link>
       </p>
     </>

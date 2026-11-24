@@ -360,6 +360,7 @@ a.tombol-utama {
 
 .kartu h3 {
   font-size: 1.375rem;
+  overflow-wrap: anywhere;
 }
 
 .kartu .rincian {

@@ -13,11 +13,11 @@ const UTAMA: Tautan[] = [
   { href: '/kontribusi', label: 'Kontribusi' },
 ];
 
-// Hanya halaman yang sudah ada. Pengaturan (Task 13) ditambahkan di sini setelah halamannya dibuat.
+// Hanya halaman yang sudah ada. Komponen pembanding dibuka dari halaman Pengaturan.
 const LAINNYA: Tautan[] = [
   { href: '/acara', label: 'Acara' },
   { href: '/komparasi', label: 'Komparasi' },
-  { href: '/pengaturan/komponen', label: 'Komponen' },
+  { href: '/pengaturan', label: 'Pengaturan' },
   { href: '/share', label: 'Share Link' },
 ];
 
