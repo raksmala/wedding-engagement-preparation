@@ -47,3 +47,6 @@ supabase/.temp
 # playwright
 /test-results/
 /playwright-report/
+
+# next dev regenerates this
+AGENTS.md
