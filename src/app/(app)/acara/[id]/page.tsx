@@ -16,7 +16,7 @@ export default async function UbahAcaraPage({ params }: { params: Promise<{ id: 
         <JudulHalaman judul="Tambah acara" />
         <FormAcara />
         <p>
-          <Link href="/acara">Kembali ke daftar acara</Link>
+          <Link href="/acara" className="tautan-aksi">Kembali ke daftar acara</Link>
         </p>
       </>
     );
@@ -38,7 +38,7 @@ export default async function UbahAcaraPage({ params }: { params: Promise<{ id: 
       <FormAcara acara={data} />
       <TombolHapus id={data.id} nama={data.nama} />
       <p>
-        <Link href="/acara">Kembali ke daftar acara</Link>
+        <Link href="/acara" className="tautan-aksi">Kembali ke daftar acara</Link>
       </p>
     </>
   );

@@ -91,7 +91,7 @@ export async function simpanKontrak(formData: FormData): Promise<HasilKontrak> {
     if (m.includes('kontrak_sudah_ada')) return gagal('Vendor ini sudah punya kontrak.');
     if (m.includes('vendor_tidak_ditemukan')) return gagal(TIDAK_DITEMUKAN);
     if (m.includes('status_vendor_tidak_sesuai')) {
-      return gagal('Kontrak hanya bisa dibuat untuk vendor di tahap Survei/Nego atau Booked.');
+      return gagal('Kontrak hanya bisa dibuat untuk vendor berstatus Survei/Nego atau Booked.');
     }
     return gagal(pesanAlokasi(m) ?? 'Kontrak belum tersimpan. Coba lagi.');
   }

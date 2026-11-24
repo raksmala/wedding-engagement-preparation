@@ -132,12 +132,18 @@ export function DaftarTugas({
                 </p>
                 {b.vendor && (
                   <p>
-                    Vendor <Link href={`/vendor/${b.vendor.id}`}>{b.vendor.nama}</Link>
+                    Vendor{' '}
+                    <Link href={`/vendor/${b.vendor.id}`} className="tautan-aksi">
+                      {b.vendor.nama}
+                    </Link>
                   </p>
                 )}
                 {b.acara && (
                   <p>
-                    Acara <Link href={`/acara/${b.acara.id}`}>{b.acara.nama}</Link>
+                    Acara{' '}
+                    <Link href={`/acara/${b.acara.id}`} className="tautan-aksi">
+                      {b.acara.nama}
+                    </Link>
                   </p>
                 )}
                 {b.dari_log && <p className="teks-lembut">Follow-up dari log kontak {formatTanggal(b.dari_log)}</p>}

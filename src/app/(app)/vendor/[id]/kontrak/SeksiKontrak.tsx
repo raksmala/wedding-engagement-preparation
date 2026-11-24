@@ -51,7 +51,7 @@ export async function SeksiKontrak({ vendorId, status }: { vendorId: string; sta
         <h2 id="judul-kontrak">Kontrak</h2>
         {bisaBuat && acara.length > 0 ? (
           <>
-            <p>Belum ada kontrak. Pilih paket di halaman Bandingkan, atau buat kontrak langsung.</p>
+            <p>Belum ada kontrak. Pilih paket di halaman Komparasi, atau buat kontrak langsung.</p>
             <FormKontrak vendorId={vendorId} acara={acara} />
           </>
         ) : bisaBuat ? (
@@ -62,7 +62,7 @@ export async function SeksiKontrak({ vendorId, status }: { vendorId: string; sta
             </Link>
           </>
         ) : (
-          <p className="teks-lembut">Kontrak dibuat saat paket dipilih, atau saat vendor masuk tahap Survei/Nego.</p>
+          <p className="teks-lembut">Kontrak dibuat saat paket dipilih, atau saat status vendor menjadi Survei/Nego.</p>
         )}
       </section>
     );
