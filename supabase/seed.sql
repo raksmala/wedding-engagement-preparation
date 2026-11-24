@@ -1,0 +1,1 @@
+-- Kosong. User test dibuat oleh tests/db/helpers.ts lewat admin API.
