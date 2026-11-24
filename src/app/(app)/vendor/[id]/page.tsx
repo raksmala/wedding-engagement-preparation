@@ -120,6 +120,12 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
         </Link>
       </div>
 
+      <p>
+        <Link href={`/komparasi/${v.kategori_vendor_id}`} className="tautan-aksi">
+          Bandingkan paket di kategori ini
+        </Link>
+      </p>
+
       <DaftarPaket
         vendorId={v.id}
         paket={paket.data}

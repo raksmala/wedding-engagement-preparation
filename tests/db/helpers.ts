@@ -59,7 +59,21 @@ export async function buatOrangLuar(email: string): Promise<SupabaseClient> {
   return buatUser(email);
 }
 
+// Trigger vendor_punya_pembayaran menolak hapus Vendor dengan Pembayaran dibayar,
+// jadi Pembayaran milik Vendor "Uji " dihapus lebih dulu.
+async function hapusPembayaranUji(): Promise<void> {
+  const { data: vendor } = await admin.from('vendor').select('id').like('nama', 'Uji %');
+  const ids = (vendor ?? []).map((v) => v.id);
+  if (ids.length === 0) return;
+  const { data: kontrak } = await admin.from('kontrak').select('id').in('vendor_id', ids);
+  const kids = (kontrak ?? []).map((k) => k.id);
+  if (kids.length === 0) return;
+  const { error } = await admin.from('pembayaran').delete().in('kontrak_id', kids);
+  if (error) throw error;
+}
+
 export async function bersihkanTest(): Promise<void> {
+  await hapusPembayaranUji();
   const { error: e1 } = await admin.from('editor_diizinkan').delete().like('email', `%${EMAIL_TEST}`);
   if (e1) throw e1;
   const { error: e2 } = await admin.from('editor').delete().like('email', `%${EMAIL_TEST}`);

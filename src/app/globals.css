@@ -451,3 +451,127 @@ a.tombol-sekunder {
     align-items: end;
   }
 }
+
+/* Komparasi */
+.filter-komparasi .pilihan {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 44px;
+  font-weight: 400;
+}
+
+.filter-komparasi .pilihan input {
+  width: 24px;
+  height: 24px;
+  flex: none;
+}
+
+.dialog input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--garis);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--teks);
+  font: inherit;
+  font-weight: 400;
+}
+
+.dialog .form label {
+  display: grid;
+  gap: 0.25rem;
+  font-weight: 600;
+}
+
+.sr-saja {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.tabel-geser {
+  max-width: 100%;
+  margin: 0 0 1.5rem;
+  overflow-x: auto;
+  border: 1px solid var(--garis);
+  border-radius: 4px;
+}
+
+.tabel-komparasi {
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 100%;
+  font-size: 0.9375rem;
+}
+
+.tabel-komparasi th,
+.tabel-komparasi td {
+  min-width: 11rem;
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--garis);
+  background: var(--bg);
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.tabel-komparasi th.kolom-label {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 6.5rem;
+  max-width: 6.5rem;
+  border-right: 1px solid var(--garis);
+  background: var(--bg);
+  color: var(--teks-lembut);
+  font-size: 0.875rem;
+}
+
+.tabel-komparasi thead th:not(.kolom-label) {
+  font-weight: 400;
+}
+
+.tabel-komparasi .nama-paket {
+  display: block;
+  color: var(--primary);
+  font-family: var(--font-judul);
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.tabel-komparasi .label-kolom {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.tabel-komparasi .kolom-dipilih {
+  background: var(--surface);
+}
+
+.tabel-komparasi .kolom-dipilih .status-label,
+.tabel-komparasi .kolom-dipilih .nama-paket,
+.tabel-komparasi .kolom-dipilih a {
+  color: var(--teks);
+}
+
+.tabel-komparasi .kolom-tidak_dipilih,
+.tabel-komparasi .kolom-tidak_dipilih a,
+.tabel-komparasi .kolom-tidak_dipilih .nama-paket {
+  color: var(--teks-lembut);
+}
+
+.tabel-komparasi .kosong-sel {
+  color: var(--teks-lembut);
+}
+
+.tabel-komparasi .kolom-dipilih.kosong-sel {
+  color: var(--teks);
+}
