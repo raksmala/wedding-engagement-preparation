@@ -1,0 +1,66 @@
+:root {
+  --bg: #f5efef;
+  --primary: #80172c;
+  --surface: #ecb6b6;
+  --accent: #60692d;
+  --font-judul: var(--font-cormorant), "Cormorant Garamond", Georgia, serif;
+  --font-isi: var(--font-source-sans), "Source Sans 3", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--primary);
+  font-family: var(--font-isi);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-judul);
+  font-weight: 600;
+  color: var(--primary);
+}
+
+a {
+  color: var(--primary);
+}
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.rupiah {
+  font-variant-numeric: tabular-nums;
+}
+
+.judul-halaman {
+  margin: 0 0 1.5rem;
+}
+
+.judul-halaman h1 {
+  margin: 0;
+  padding-bottom: 0.5rem;
+  font-size: 2rem;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.judul-halaman::after {
+  content: "";
+  display: block;
+  height: 5px;
+  border-top: 1px solid var(--primary);
+  border-bottom: 1px solid var(--primary);
+}

@@ -1,0 +1,8 @@
+{
+  "name": "Rendy & Dinar",
+  "short_name": "Rendy & Dinar",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#80172c",
+  "background_color": "#f5efef"
+}
