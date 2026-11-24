@@ -11,6 +11,7 @@ import { adalahUuid } from '@/lib/validasi';
 import type { TipeKomponen } from '@/lib/komponen';
 import { DaftarPaket } from './DaftarPaket';
 import { SeksiKontrak } from './kontrak/SeksiKontrak';
+import { SeksiLogKontak } from './log/SeksiLogKontak';
 import { UbahStatus } from './UbahStatus';
 
 export default async function VendorDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -134,7 +135,7 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
         url={urlBerkas}
       />
       <SeksiKontrak vendorId={v.id} status={v.status} />
-      {/* Slot Log Kontak (Task 10): section Log Kontak dan Tugas follow-up dipasang di sini. */}
+      <SeksiLogKontak vendorId={v.id} />
 
       <p className="jejak-audit">
         Terakhir diubah oleh {pengubah ?? 'Editor tidak dikenal'}, {formatTanggalJamWib(v.diubah_pada)}

@@ -765,6 +765,100 @@ export type Database = {
           },
         ]
       }
+      tugas: {
+        Row: {
+          acara_id: string | null
+          catatan: string | null
+          dibuat_oleh: string | null
+          dibuat_pada: string
+          diubah_oleh: string | null
+          diubah_pada: string
+          id: string
+          jatuh_tempo: string | null
+          judul: string
+          log_kontak_id: string | null
+          pic_id: string
+          selesai_pada: string | null
+          status: Database["public"]["Enums"]["status_tugas"]
+          vendor_id: string | null
+        }
+        Insert: {
+          acara_id?: string | null
+          catatan?: string | null
+          dibuat_oleh?: string | null
+          dibuat_pada?: string
+          diubah_oleh?: string | null
+          diubah_pada?: string
+          id?: string
+          jatuh_tempo?: string | null
+          judul: string
+          log_kontak_id?: string | null
+          pic_id: string
+          selesai_pada?: string | null
+          status?: Database["public"]["Enums"]["status_tugas"]
+          vendor_id?: string | null
+        }
+        Update: {
+          acara_id?: string | null
+          catatan?: string | null
+          dibuat_oleh?: string | null
+          dibuat_pada?: string
+          diubah_oleh?: string | null
+          diubah_pada?: string
+          id?: string
+          jatuh_tempo?: string | null
+          judul?: string
+          log_kontak_id?: string | null
+          pic_id?: string
+          selesai_pada?: string | null
+          status?: Database["public"]["Enums"]["status_tugas"]
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tugas_acara_id_fkey"
+            columns: ["acara_id"]
+            isOneToOne: false
+            referencedRelation: "acara"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tugas_dibuat_oleh_fkey"
+            columns: ["dibuat_oleh"]
+            isOneToOne: false
+            referencedRelation: "editor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tugas_diubah_oleh_fkey"
+            columns: ["diubah_oleh"]
+            isOneToOne: false
+            referencedRelation: "editor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tugas_log_kontak_id_fkey"
+            columns: ["log_kontak_id"]
+            isOneToOne: false
+            referencedRelation: "log_kontak"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tugas_pic_id_fkey"
+            columns: ["pic_id"]
+            isOneToOne: false
+            referencedRelation: "editor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tugas_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendor: {
         Row: {
           catatan: string | null
@@ -984,6 +1078,7 @@ export type Database = {
       saluran_kontak: "whatsapp" | "telepon" | "bertemu" | "email" | "lainnya"
       status_paket: "aktif" | "dipilih" | "tidak_dipilih"
       status_pembayaran: "terjadwal" | "dibayar"
+      status_tugas: "belum" | "selesai"
       status_vendor: "kandidat" | "survei_nego" | "booked" | "selesai" | "batal"
       tipe_komponen: "teks" | "angka" | "ya_tidak"
     }
@@ -1121,6 +1216,7 @@ export const Constants = {
       saluran_kontak: ["whatsapp", "telepon", "bertemu", "email", "lainnya"],
       status_paket: ["aktif", "dipilih", "tidak_dipilih"],
       status_pembayaran: ["terjadwal", "dibayar"],
+      status_tugas: ["belum", "selesai"],
       status_vendor: ["kandidat", "survei_nego", "booked", "selesai", "batal"],
       tipe_komponen: ["teks", "angka", "ya_tidak"],
     },

@@ -72,8 +72,18 @@ async function hapusPembayaranUji(): Promise<void> {
   if (error) throw error;
 }
 
+// tugas.pic_id menolak hapus Editor yang masih jadi PIC, jadi Tugas milik Editor test dihapus dulu.
+async function hapusTugasUji(): Promise<void> {
+  const { data: editor } = await admin.from('editor').select('id').like('email', `%${EMAIL_TEST}`);
+  const ids = (editor ?? []).map((e) => e.id);
+  if (ids.length === 0) return;
+  const { error } = await admin.from('tugas').delete().in('pic_id', ids);
+  if (error) throw error;
+}
+
 export async function bersihkanTest(): Promise<void> {
   await hapusPembayaranUji();
+  await hapusTugasUji();
   const { error: e1 } = await admin.from('editor_diizinkan').delete().like('email', `%${EMAIL_TEST}`);
   if (e1) throw e1;
   const { error: e2 } = await admin.from('editor').delete().like('email', `%${EMAIL_TEST}`);

@@ -653,3 +653,14 @@ details summary {
   font-size: 1.25rem;
   font-weight: 600;
 }
+
+/* Log Kontak dan Tugas */
+.isi-panjang {
+  white-space: pre-line;
+}
+
+@media (min-width: 560px) {
+  .filter.filter-dua {
+    grid-template-columns: repeat(2, 1fr) auto;
+  }
+}
