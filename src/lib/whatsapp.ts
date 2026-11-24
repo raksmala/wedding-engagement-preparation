@@ -6,7 +6,7 @@ export function linkWhatsApp(nomor: string): string | null {
   else if (bersih.startsWith('62')) internasional = bersih;
   else return null;
   if (internasional[2] === '0') return null;
-  const panjang =internasional.length - 2;
+  const panjang = internasional.length - 2;
   if (panjang < 10 || panjang > 13) return null;
   return `https://wa.me/${internasional}`;
 }
