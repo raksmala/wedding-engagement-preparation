@@ -1,5 +1,6 @@
 -- Tugas: hal yang harus dikerjakan, dengan PIC dan Jatuh Tempo.
 -- Bisa terkait Vendor, Acara, dan Log Kontak asal follow-up.
+-- View agenda untuk dashboard ada di akhir file.
 
 create type status_tugas as enum ('belum', 'selesai');
 
@@ -78,3 +79,42 @@ grant all on tugas to service_role;
 
 create policy tugas_editor on tugas for all to authenticated
   using (is_editor()) with check (is_editor());
+
+-- Agenda dashboard: Tugas belum selesai dan Pembayaran Terjadwal yang punya Jatuh Tempo.
+-- Kelompok Terlambat, Hari ini, dan 7 hari ke depan dihitung aplikasi dengan tanggal Asia/Jakarta.
+-- security_invoker: RLS tugas, pembayaran, kontrak, dan vendor tetap berlaku untuk pembacanya.
+create view agenda with (security_invoker = true) as
+select
+  'tugas'::text as jenis,
+  t.id,
+  t.judul,
+  t.jatuh_tempo,
+  t.pic_id,
+  t.vendor_id,
+  t.acara_id,
+  null::bigint as nominal
+from tugas t
+where t.status = 'belum' and t.jatuh_tempo is not null
+union all
+select
+  'pembayaran'::text as jenis,
+  p.id,
+  -- Contoh: "Pelunasan Foto A".
+  (case p.jenis
+    when 'dp' then 'DP'
+    when 'termin' then 'Termin'
+    when 'pelunasan' then 'Pelunasan'
+  end) || ' ' || v.nama as judul,
+  p.jatuh_tempo,
+  null::uuid as pic_id,
+  k.vendor_id,
+  null::uuid as acara_id,
+  p.nominal
+from pembayaran p
+join kontrak k on k.id = p.kontrak_id
+join vendor v on v.id = k.vendor_id
+where p.status = 'terjadwal' and p.jatuh_tempo is not null;
+
+revoke all on agenda from public, anon;
+grant select on agenda to authenticated;
+grant select on agenda to service_role;

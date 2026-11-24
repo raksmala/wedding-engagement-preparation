@@ -987,6 +987,19 @@ export type Database = {
       }
     }
     Views: {
+      agenda: {
+        Row: {
+          acara_id: string | null
+          id: string | null
+          jatuh_tempo: string | null
+          jenis: string | null
+          judul: string | null
+          nominal: number | null
+          pic_id: string | null
+          vendor_id: string | null
+        }
+        Relationships: []
+      }
       kontribusi_pihak: {
         Row: {
           nama: string | null

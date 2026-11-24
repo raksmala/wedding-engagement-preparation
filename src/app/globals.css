@@ -664,3 +664,120 @@ details summary {
     grid-template-columns: repeat(2, 1fr) auto;
   }
 }
+
+/* Shell: navigasi bawah tetap di layar, jadi isi halaman diberi ruang di bawah. */
+.isi-utama {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 1rem calc(6rem + env(safe-area-inset-bottom));
+}
+
+.navigasi-bawah {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 10;
+  padding-bottom: env(safe-area-inset-bottom);
+  border-top: 1px solid var(--garis);
+  background: var(--bg);
+}
+
+.navigasi-bawah > ul {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+}
+
+.navigasi-bawah li {
+  position: relative;
+  min-width: 0;
+}
+
+.tautan-navigasi,
+.navigasi-bawah summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  padding: 0 0.25rem;
+  border-top: 3px solid transparent;
+  color: var(--teks);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.navigasi-bawah summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.navigasi-bawah summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Halaman aktif ditandai garis atas dan tebal huruf, bukan hanya warna. */
+.tautan-navigasi[aria-current="page"],
+.navigasi-bawah summary.aktif {
+  border-top-color: var(--primary);
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.navigasi-bawah :focus-visible {
+  outline-offset: -4px;
+}
+
+.menu-lainnya {
+  position: absolute;
+  right: 0.25rem;
+  bottom: calc(100% + 0.25rem);
+  min-width: 12rem;
+  margin: 0;
+  padding: 0.25rem 0;
+  border: 1px solid var(--garis);
+  border-radius: 4px;
+  background: var(--bg);
+  list-style: none;
+}
+
+.menu-lainnya a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 1rem;
+  color: var(--teks);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.menu-lainnya a[aria-current="page"] {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+/* Dashboard: kelompok Terlambat adalah titik fokus layar. */
+.kelompok-agenda h2 {
+  margin: 0 0 0.75rem;
+}
+
+.kelompok-terlambat {
+  padding: 1rem;
+  border: 2px solid var(--primary);
+  border-radius: 4px;
+}
+
+.kelompok-terlambat h2 {
+  font-size: 1.75rem;
+}
+
+.form-agenda {
+  margin-top: 1rem;
+}

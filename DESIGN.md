@@ -56,3 +56,5 @@ Garis tipis ganda berwarna `--primary` sebagai pemisah di bawah judul halaman, m
 - Layar HP dirancang lebih dulu. Komparasi di HP butuh cara khusus supaya tetap terbaca, misalnya kolom Komponen yang menempel di kiri saat digeser.
 - Satu titik fokus per layar. Di dashboard titik fokusnya kelompok Terlambat.
 - Keputusan visual yang belum ada di file ini (radius, jarak, bayangan) dicatat di sini beserta alasannya saat dibuat.
+- Navigasi bawah: bar tetap di bawah layar dengan latar `--bg` dan garis atas `--garis`. Halaman aktif ditandai garis atas 3px `--primary` dan huruf tebal, jadi tidak hanya dibedakan warna. Tinggi item 56px supaya mudah diketuk dengan jempol.
+- Dashboard: kelompok Terlambat diberi bingkai 2px `--primary` dan judul lebih besar sebagai satu-satunya titik fokus. Kelompok lain memakai gaya `bagian` biasa.
