@@ -9,11 +9,17 @@ export function FormTandaiDibayar({
   pihak,
   hariIni,
   selesai,
+  berhasil,
+  label = 'Form tandai dibayar',
 }: {
   pembayaranId: string;
   pihak: PihakPilihan[];
   hariIni: string;
+  // Dipanggil saat form ditutup, baik setelah tersimpan maupun lewat Batal.
   selesai: () => void;
+  // Dipanggil hanya setelah tersimpan, sebelum selesai().
+  berhasil?: () => void;
+  label?: string;
 }) {
   const [tanggal, setTanggal] = useState(hariIni);
   const [pihakId, setPihakId] = useState('');
@@ -25,13 +31,17 @@ export function FormTandaiDibayar({
     setGalat(undefined);
     mulai(async () => {
       const hasil = await tandaiDibayar(pembayaranId, tanggal, pihakId);
-      if (hasil.error) setGalat(hasil.error);
-      else selesai();
+      if (hasil.error) {
+        setGalat(hasil.error);
+        return;
+      }
+      berhasil?.();
+      selesai();
     });
   }
 
   return (
-    <form onSubmit={simpan} className="form" aria-label="Form tandai dibayar">
+    <form onSubmit={simpan} className="form" aria-label={label}>
       {galat && (
         <p role="alert" className="pesan-galat">
           {galat}

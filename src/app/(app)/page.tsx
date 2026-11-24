@@ -18,23 +18,27 @@ export default async function DashboardPage() {
 
   // Semua baris agenda dibaca, lalu dikelompokkan di server dengan tanggal Asia/Jakarta.
   // Yang jatuh tempo lebih dari 7 hari lagi tidak ditampilkan.
-  const [agenda, vendor, editor, acara, pihak] = await Promise.all([
+  const [agenda, vendor, tugas, editor, acara, pihak] = await Promise.all([
     supabase
       .from('agenda')
       .select('jenis, id, judul, jatuh_tempo, pic_id, vendor_id, acara_id, nominal')
       .order('jatuh_tempo')
       .order('judul'),
     supabase.from('vendor').select('id, nama'),
+    // Hanya jumlah, untuk membedakan "belum ada data sama sekali" dari "semua sudah selesai".
+    supabase.from('tugas').select('id', { count: 'exact', head: true }),
     supabase.from('editor').select('id, nama'),
     supabase.from('acara').select('id, nama'),
     // Tandai dibayar hanya menerima Pihak yang tidak diarsipkan.
     supabase.from('pihak').select('id, nama').eq('arsip', false).order('urutan').order('nama'),
   ]);
-  if (agenda.error || vendor.error || editor.error || acara.error || pihak.error) {
+  if (agenda.error || vendor.error || tugas.error || editor.error || acara.error || pihak.error) {
     throw new Error('Gagal memuat dashboard');
   }
 
-  if (agenda.data.length === 0 && vendor.data.length === 0) {
+  // Pembayaran selalu milik Vendor, jadi tanpa Vendor dan tanpa Tugas agenda pasti kosong.
+  // Tugas yang sudah selesai tetap dihitung, supaya menyelesaikan Tugas terakhir tidak memunculkan ajakan ini.
+  if (vendor.data.length === 0 && (tugas.count ?? 0) === 0) {
     return (
       <>
         <JudulHalaman judul="Dashboard" />
@@ -86,7 +90,9 @@ export default async function DashboardPage() {
             aria-labelledby={idJudul}
             className={kunci === 'terlambat' ? 'bagian kelompok-agenda kelompok-terlambat' : 'bagian kelompok-agenda'}
           >
-            <h2 id={idJudul}>{`${judul} (${isi.length})`}</h2>
+            <h2 id={idJudul} tabIndex={-1}>
+              {`${judul} (${isi.length})`}
+            </h2>
             {isi.length === 0 ? (
               <p className="teks-lembut">{kosong}</p>
             ) : (
@@ -98,6 +104,7 @@ export default async function DashboardPage() {
                     terlambat={kunci === 'terlambat'}
                     pihak={pihak.data}
                     hariIni={hariIni}
+                    idJudulKelompok={idJudul}
                   />
                 ))}
               </ul>

@@ -72,6 +72,16 @@ async function hapusPembayaranUji(): Promise<void> {
   if (error) throw error;
 }
 
+// Hapus Tugas berjudul "Uji ", Pembayaran milik Vendor "Uji ", lalu Vendor "Uji " itu sendiri.
+// Kontrak, Paket, Log Kontak, dan relasi Acara ikut terhapus lewat cascade.
+export async function hapusDataUji(): Promise<void> {
+  const { error: eTugas } = await admin.from('tugas').delete().like('judul', 'Uji %');
+  if (eTugas) throw eTugas;
+  await hapusPembayaranUji();
+  const { error } = await admin.from('vendor').delete().like('nama', 'Uji %');
+  if (error) throw error;
+}
+
 // tugas.pic_id menolak hapus Editor yang masih jadi PIC, jadi Tugas milik Editor test dihapus dulu.
 async function hapusTugasUji(): Promise<void> {
   const { data: editor } = await admin.from('editor').select('id').like('email', `%${EMAIL_TEST}`);

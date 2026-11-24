@@ -36,6 +36,16 @@ export function NavigasiBawah() {
     if (menu.current) menu.current.open = false;
   }, [pathname]);
 
+  // Ketukan atau klik di luar menu menutupnya.
+  useEffect(() => {
+    function tutupDiLuar(e: PointerEvent) {
+      const el = menu.current;
+      if (el?.open && e.target instanceof Node && !el.contains(e.target)) el.open = false;
+    }
+    document.addEventListener('pointerdown', tutupDiLuar);
+    return () => document.removeEventListener('pointerdown', tutupDiLuar);
+  }, []);
+
   function tutupDenganEscape(e: React.KeyboardEvent<HTMLDetailsElement>) {
     if (e.key !== 'Escape' || !menu.current?.open) return;
     menu.current.open = false;
@@ -58,7 +68,10 @@ export function NavigasiBawah() {
         ))}
         <li>
           <details ref={menu} className="lainnya" onKeyDown={tutupDenganEscape}>
-            <summary className={lainnyaAktif ? 'aktif' : undefined}>Lainnya</summary>
+            <summary className={lainnyaAktif ? 'aktif' : undefined}>
+              Lainnya
+              {lainnyaAktif && <span className="sr-saja"> (halaman ini)</span>}
+            </summary>
             <ul className="menu-lainnya">
               {LAINNYA.map((t) => (
                 <li key={t.href}>

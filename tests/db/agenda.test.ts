@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { admin, bersihkanTest, buatEditorTest, buatOrangLuar, klienAnon } from './helpers';
+import { bersihkanTest, buatEditorTest, buatOrangLuar, hapusDataUji, klienAnon } from './helpers';
 
 let editor: SupabaseClient;
 let picId: string;
@@ -9,64 +9,50 @@ let kontrakId: string;
 let acaraId: string;
 let pihakId: string;
 
-// Vendor dengan Pembayaran dibayar tidak bisa dihapus, jadi Pembayarannya dihapus dulu.
-async function bersihkan() {
-  const { error: eTugas } = await admin.from('tugas').delete().like('judul', 'Uji %');
-  if (eTugas) throw eTugas;
-  const { data: vendor } = await admin.from('vendor').select('id').like('nama', 'Uji %');
-  const ids = (vendor ?? []).map((v) => v.id);
-  if (ids.length) {
-    const { data: kontrak } = await admin.from('kontrak').select('id').in('vendor_id', ids);
-    const kids = (kontrak ?? []).map((k) => k.id);
-    if (kids.length) {
-      const { error } = await admin.from('pembayaran').delete().in('kontrak_id', kids);
-      if (error) throw error;
-    }
-  }
-  const { error } = await admin.from('vendor').delete().like('nama', 'Uji %');
-  if (error) throw error;
-}
-
 async function idByNama(tabel: string, nama: string): Promise<string> {
   const { data, error } = await editor.from(tabel).select('id').eq('nama', nama).single();
   if (error) throw error;
   return data.id;
 }
 
+// Vendor Booked lewat pilih_paket, sehingga punya Kontrak untuk Pembayaran.
+async function buatVendorBooked(nama: string): Promise<{ vendorId: string; kontrakId: string }> {
+  const { data: v, error: ev } = await editor
+    .from('vendor')
+    .insert({ nama, kategori_vendor_id: await idByNama('kategori_vendor', 'Venue') })
+    .select('id')
+    .single();
+  if (ev) throw ev;
+  const { error: eva } = await editor.from('vendor_acara').insert({ vendor_id: v.id, acara_id: acaraId });
+  if (eva) throw eva;
+  const { data: paket, error: ep } = await editor
+    .from('paket')
+    .insert({ vendor_id: v.id, nama: `Paket ${nama}`, harga: 9000000 })
+    .select('id')
+    .single();
+  if (ep) throw ep;
+  const { error: epp } = await editor.rpc('pilih_paket', { p_paket_id: paket.id });
+  if (epp) throw epp;
+  const { data: k, error: ek } = await editor.from('kontrak').select('id').eq('vendor_id', v.id).single();
+  if (ek) throw ek;
+  return { vendorId: v.id, kontrakId: k.id };
+}
+
 beforeAll(async () => {
   editor = await buatEditorTest('agenda-db@test.local');
-  await bersihkan();
+  await hapusDataUji();
   const { data: id, error } = await editor.rpc('editor_saat_ini');
   if (error) throw error;
   picId = id as string;
   acaraId = await idByNama('acara', 'Resepsi');
   pihakId = await idByNama('pihak', 'Rendy');
 
-  const { data: v, error: ev } = await editor
-    .from('vendor')
-    .insert({ nama: 'Uji Agenda Venue', kategori_vendor_id: await idByNama('kategori_vendor', 'Venue') })
-    .select('id')
-    .single();
-  if (ev) throw ev;
-  vendorId = v.id;
-  const { error: eva } = await editor.from('vendor_acara').insert({ vendor_id: vendorId, acara_id: acaraId });
-  if (eva) throw eva;
-  const { data: paket, error: ep } = await editor
-    .from('paket')
-    .insert({ vendor_id: vendorId, nama: 'Uji Paket Agenda', harga: 9000000 })
-    .select('id')
-    .single();
-  if (ep) throw ep;
-  const { error: epp } = await editor.rpc('pilih_paket', { p_paket_id: paket.id });
-  if (epp) throw epp;
-  const { data: k, error: ek } = await editor.from('kontrak').select('id').eq('vendor_id', vendorId).single();
-  if (ek) throw ek;
-  kontrakId = k.id;
+  ({ vendorId, kontrakId } = await buatVendorBooked('Uji Agenda Venue'));
 });
 
 afterAll(async () => {
   try {
-    await bersihkan();
+    await hapusDataUji();
   } finally {
     await bersihkanTest();
   }
@@ -171,6 +157,27 @@ describe('view agenda', () => {
     const { error: e2 } = await editor.from('tugas').update({ status: 'selesai' }).eq('id', id['Uji Agenda Ada']);
     if (e2) throw e2;
     expect(await bacaAgenda([id['Uji Agenda Ada']])).toEqual([]);
+  });
+
+  test('pembayaran terjadwal vendor batal tidak tampil, tugasnya tetap tampil', async () => {
+    const batal = await buatVendorBooked('Uji Agenda Batal');
+    const { data: bayar, error } = await editor
+      .from('pembayaran')
+      .insert({ kontrak_id: batal.kontrakId, jenis: 'dp', nominal: 1000000, status: 'terjadwal', jatuh_tempo: '2026-12-02' })
+      .select('id')
+      .single();
+    if (error) throw error;
+    const { data: tugas, error: e2 } = await editor
+      .from('tugas')
+      .insert({ judul: 'Uji Agenda Urus Batal', pic_id: picId, jatuh_tempo: '2026-12-02', vendor_id: batal.vendorId })
+      .select('id')
+      .single();
+    if (e2) throw e2;
+    expect((await bacaAgenda([bayar.id, tugas.id])).map((b) => b.id).sort()).toEqual([bayar.id, tugas.id].sort());
+
+    const { error: e3 } = await editor.from('vendor').update({ status: 'batal' }).eq('id', batal.vendorId);
+    if (e3) throw e3;
+    expect((await bacaAgenda([bayar.id, tugas.id])).map((b) => b.id)).toEqual([tugas.id]);
   });
 
   test('anon tidak bisa membaca agenda, orang luar tidak melihat isinya', async () => {

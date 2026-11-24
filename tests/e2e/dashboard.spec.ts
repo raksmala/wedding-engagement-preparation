@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { admin, bersihkanTest, buatEditorTest } from '../db/helpers';
+import { admin, bersihkanTest, buatEditorTest, hapusDataUji } from '../db/helpers';
 import { masukSebagaiEditor } from './helpers';
 
 const EMAIL = 'agenda@test.local';
@@ -20,24 +20,6 @@ function tanggalJakarta(geserHari = 0): string {
   return d.toISOString().slice(0, 10);
 }
 
-// Vendor dengan Pembayaran dibayar tidak bisa dihapus, jadi Pembayarannya dihapus dulu.
-async function bersihkan() {
-  const { error: eTugas } = await admin.from('tugas').delete().like('judul', 'Uji %');
-  if (eTugas) throw eTugas;
-  const { data: vendor } = await admin.from('vendor').select('id').like('nama', 'Uji %');
-  const ids = (vendor ?? []).map((v) => v.id);
-  if (ids.length > 0) {
-    const { data: kontrak } = await admin.from('kontrak').select('id').in('vendor_id', ids);
-    const kids = (kontrak ?? []).map((k) => k.id);
-    if (kids.length > 0) {
-      const { error } = await admin.from('pembayaran').delete().in('kontrak_id', kids);
-      if (error) throw error;
-    }
-  }
-  const { error } = await admin.from('vendor').delete().like('nama', 'Uji %');
-  if (error) throw error;
-}
-
 test.beforeAll(async () => {
   editor = await buatEditorTest(EMAIL);
   const { data, error } = await editor.rpc('editor_saat_ini');
@@ -46,13 +28,13 @@ test.beforeAll(async () => {
 });
 
 test.beforeEach(async ({ page }) => {
-  await bersihkan();
+  await hapusDataUji();
   await masukSebagaiEditor(page, EMAIL);
 });
 
 test.afterAll(async () => {
   try {
-    await bersihkan();
+    await hapusDataUji();
   } finally {
     await bersihkanTest();
   }
@@ -142,17 +124,23 @@ test('dashboard mengelompokkan terlambat, hari ini, dan 7 hari ke depan', async 
   await expect(page.getByText('Uji Sepuluh Hari')).toHaveCount(0);
 });
 
-test('selesai di tugas terlambat mengosongkan kelompok terlambat', async ({ page }) => {
+test('selesai di tugas terlambat menghilangkan item dan mengurangi hitungan terlambat', async ({ page }) => {
   const dasar = await dasarKelompok();
-  test.skip(dasar.terlambat > 0, 'DB dev punya item terlambat di luar data test ini');
   await buatTugas('Uji Lewat Tempo', -1);
 
   await page.goto('/');
   const terlambat = kelompok(page, /^Terlambat/);
-  await expect(terlambat.getByRole('heading')).toHaveText('Terlambat (1)');
+  const judul = terlambat.getByRole('heading');
+  await expect(judul).toHaveText(`Terlambat (${dasar.terlambat + 1})`);
   await item(page, 'Uji Lewat Tempo').getByRole('button', { name: /Tandai selesai/ }).click();
-  await expect(terlambat.getByRole('heading')).toHaveText('Terlambat (0)');
-  await expect(terlambat.getByText('Tidak ada yang terlambat.')).toBeVisible();
+  await expect(page.getByText('Uji Lewat Tempo')).toHaveCount(0);
+  await expect(judul).toHaveText(`Terlambat (${dasar.terlambat})`);
+  // Fokus keyboard pindah ke judul kelompok, tidak jatuh ke body.
+  await expect(judul).toBeFocused();
+  // Pesan kosong hanya bisa dicek kalau DB dev tidak punya item terlambat lain.
+  if (dasar.terlambat === 0) {
+    await expect(terlambat.getByText('Tidak ada yang terlambat.')).toBeVisible();
+  }
 
   const { data } = await admin.from('tugas').select('status').eq('judul', 'Uji Lewat Tempo').single();
   expect(data?.status).toBe('selesai');
@@ -167,24 +155,29 @@ test('tandai dibayar dari dashboard menghilangkan item dan mengurangi sisa tagih
   await page.goto('/');
   const pelunasan = item(page, 'Pelunasan Uji Venue Agenda');
   await pelunasan.getByRole('button', { name: /Tandai dibayar/ }).click();
-  const form = pelunasan.getByRole('form', { name: 'Form tandai dibayar' });
+  const form = pelunasan.getByRole('form', { name: 'Tandai dibayar: Pelunasan Uji Venue Agenda' });
   await expect(form.getByLabel('Tanggal bayar')).toHaveValue(tanggalJakarta());
   await form.getByLabel('Dibayar oleh').selectOption({ label: 'Rendy' });
   await form.getByRole('button', { name: 'Simpan' }).click();
   await expect(page.getByText('Pelunasan Uji Venue Agenda')).toHaveCount(0);
+  await expect(kelompok(page, /^Hari ini/).getByRole('heading')).toBeFocused();
 
   await page.goto(`/vendor/${vendorId}`);
   await expect(sisa).toContainText('Rp 3.500.000');
 });
 
 test('tanpa data sama sekali, dashboard mengajak menambah vendor', async ({ page }) => {
-  const [vendor, agenda] = await Promise.all([
+  const [vendor, tugas] = await Promise.all([
     admin.from('vendor').select('id', { count: 'exact', head: true }),
-    admin.from('agenda').select('id', { count: 'exact', head: true }),
+    admin.from('tugas').select('id', { count: 'exact', head: true }),
   ]);
   if (vendor.error) throw vendor.error;
-  if (agenda.error) throw agenda.error;
-  test.skip((vendor.count ?? 0) > 0 || (agenda.count ?? 0) > 0, 'DB dev masih punya vendor atau agenda di luar data test');
+  if (tugas.error) throw tugas.error;
+  // DB dev dipakai bersama. Tampilan kosong hanya muncul kalau benar-benar tidak ada vendor dan tugas.
+  test.skip(
+    (vendor.count ?? 0) > 0 || (tugas.count ?? 0) > 0,
+    `Tampilan kosong tidak bisa dites: setelah data Uji dihapus, DB dev masih punya ${vendor.count ?? 0} vendor dan ${tugas.count ?? 0} tugas`,
+  );
 
   await page.goto('/');
   await expect(page.getByText('Belum ada jadwal yang perlu dikerjakan.')).toBeVisible();
@@ -205,6 +198,13 @@ test('navigasi bawah menandai halaman aktif dan menu lainnya hanya berisi halama
   await expect(nav.getByRole('link', { name: 'Dashboard' })).not.toHaveAttribute('aria-current', 'page');
 
   const acara = nav.getByRole('link', { name: 'Acara' });
+  const ringkasLainnya = nav.locator('summary');
+  await expect(ringkasLainnya).not.toContainText('(halaman ini)');
+  await expect(acara).toBeHidden();
+  await nav.getByText('Lainnya').click();
+  await expect(acara).toBeVisible();
+  // Klik di luar menu menutupnya.
+  await page.getByRole('heading', { level: 1 }).click();
   await expect(acara).toBeHidden();
   await nav.getByText('Lainnya').click();
   await expect(acara).toBeVisible();
@@ -212,12 +212,13 @@ test('navigasi bawah menandai halaman aktif dan menu lainnya hanya berisi halama
   await expect(lainnya).toHaveText(['Acara', 'Komparasi', 'Komponen']);
   for (const a of await lainnya.all()) {
     const href = await a.getAttribute('href');
-    expect((await page.request.get(href!)).status()).toBe(200);
+    expect((await page.request.get(href!, { maxRedirects: 0 })).status()).toBe(200);
   }
 
   await acara.click();
   await expect(page).toHaveURL(/\/acara$/);
   await expect(nav.getByRole('link', { name: 'Acara' })).toBeHidden();
+  await expect(ringkasLainnya).toContainText('(halaman ini)');
   await nav.getByText('Lainnya').click();
   await expect(nav.getByRole('link', { name: 'Acara' })).toHaveAttribute('aria-current', 'page');
   await page.keyboard.press('Escape');

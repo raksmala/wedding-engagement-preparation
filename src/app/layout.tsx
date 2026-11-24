@@ -25,6 +25,8 @@ export const viewport: Viewport = {
   themeColor: "#80172c",
   width: "device-width",
   initialScale: 1,
+  // Supaya env(safe-area-inset-bottom) terisi dan navigasi bawah tidak tertutup indikator home di iPhone.
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

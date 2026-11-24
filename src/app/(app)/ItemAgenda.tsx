@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useTransition } from 'react';
+import { useRef, useState, useTransition } from 'react';
 import { Rupiah } from '@/components/Rupiah';
 import { StatusLabel } from '@/components/StatusLabel';
 import { formatTanggal } from '@/lib/tanggal';
@@ -27,24 +27,40 @@ export function ItemAgenda({
   terlambat,
   pihak,
   hariIni,
+  idJudulKelompok,
 }: {
   item: BarisAgenda;
   terlambat: boolean;
   pihak: PihakPilihan[];
   hariIni: string;
+  // Judul kelompok (tabIndex -1) yang menerima fokus setelah item ini selesai.
+  idJudulKelompok: string;
 }) {
   const [bayar, setBayar] = useState(false);
   const [galat, setGalat] = useState<string>();
   const [memproses, mulai] = useTransition();
+  const tombolBayar = useRef<HTMLButtonElement>(null);
   const idFormBayar = `bayar-${item.id}`;
 
   // Setelah berhasil, revalidatePath('/') di action membuat item hilang dari dashboard.
+  // Fokus dipindah ke judul kelompok supaya tidak jatuh ke body saat tombolnya hilang.
+  function fokusKeJudul() {
+    document.getElementById(idJudulKelompok)?.focus();
+  }
+
   function selesai() {
     setGalat(undefined);
     mulai(async () => {
       const hasil = await selesaikanTugas(item.id);
-      setGalat(hasil.error);
+      if (hasil.error) setGalat(hasil.error);
+      else fokusKeJudul();
     });
+  }
+
+  function tutupFormBayar() {
+    setBayar(false);
+    // Kalau tersimpan, fokus sudah ada di judul kelompok. Kalau Batal, fokus kembali ke tombolnya.
+    if (document.activeElement?.id !== idJudulKelompok) tombolBayar.current?.focus();
   }
 
   return (
@@ -92,6 +108,7 @@ export function ItemAgenda({
           </button>
         ) : (
           <button
+            ref={tombolBayar}
             type="button"
             className={bayar ? 'tombol-sekunder' : 'tombol-utama'}
             aria-label={`Tandai dibayar: ${item.judul}`}
@@ -109,7 +126,9 @@ export function ItemAgenda({
             pembayaranId={item.id}
             pihak={pihak}
             hariIni={hariIni}
-            selesai={() => setBayar(false)}
+            label={`Tandai dibayar: ${item.judul}`}
+            berhasil={fokusKeJudul}
+            selesai={tutupFormBayar}
           />
         </div>
       )}
