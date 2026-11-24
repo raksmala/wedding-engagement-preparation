@@ -38,10 +38,14 @@ afterAll(async () => {
   }
 });
 
-async function buatVendor(nama: string, acaraNama: string[]): Promise<string> {
+async function buatVendor(
+  nama: string,
+  acaraNama: string[],
+  status: 'kandidat' | 'survei_nego' = 'survei_nego',
+): Promise<string> {
   const { data, error } = await editor
     .from('vendor')
-    .insert({ nama: `Uji ${nama}`, kategori_vendor_id: kategori['Venue'] })
+    .insert({ nama: `Uji ${nama}`, kategori_vendor_id: kategori['Venue'], status })
     .select('id')
     .single();
   if (error) throw error;
@@ -109,6 +113,25 @@ describe('simpan_kontrak', () => {
       .single();
     expect(k).toEqual({ paket_id: null, tanggal_kesepakatan: '2026-12-01', catatan: 'Kesepakatan lisan' });
     expect(await total(v)).toBe(8000000);
+  });
+
+  test('vendor survei_nego jadi booked, kandidat ditolak', async () => {
+    const v = await buatVendor('Status Manual', ['Resepsi']);
+    const args = (id: string) => ({
+      p_vendor_id: id,
+      p_data: {},
+      p_alokasi: [{ acara_id: acara['Resepsi'], nominal: 100 }],
+    });
+    expect((await editor.rpc('simpan_kontrak', args(v))).error).toBeNull();
+    const { data } = await editor.from('vendor').select('status').eq('id', v).single();
+    expect(data?.status).toBe('booked');
+
+    const k = await buatVendor('Status Kandidat', ['Resepsi'], 'kandidat');
+    const { error } = await editor.rpc('simpan_kontrak', args(k));
+    expect(error?.message).toContain('status_vendor_tidak_sesuai');
+    expect(await jumlahKontrak(k)).toBe(0);
+    const { data: d2 } = await editor.from('vendor').select('status').eq('id', k).single();
+    expect(d2?.status).toBe('kandidat');
   });
 
   test('tanggal dan catatan boleh kosong', async () => {
@@ -205,6 +228,27 @@ describe('simpan_alokasi', () => {
     expect(error).toBeNull();
     expect(await alokasiDari(kid)).toEqual({ [acara['Resepsi']]: 7500000 });
     expect(await total(v)).toBe(7500000);
+  });
+
+  test('audit kontrak maju dan dicatat atas editor pemanggil', async () => {
+    const v = await buatVendor('Audit Alokasi', ['Resepsi']);
+    const p = await buatPaket(v, 'Audit', 100);
+    await editor.rpc('pilih_paket', { p_paket_id: p });
+    const kid = await kontrakId(v);
+    const { error: e0 } = await admin
+      .from('kontrak')
+      .update({ diubah_pada: '2020-01-01T00:00:00Z', diubah_oleh: null })
+      .eq('id', kid);
+    expect(e0).toBeNull();
+    const { error } = await editor.rpc('simpan_alokasi', {
+      p_kontrak_id: kid,
+      p_alokasi: [{ acara_id: acara['Resepsi'], nominal: 250 }],
+    });
+    expect(error).toBeNull();
+    const { data } = await editor.from('kontrak').select('diubah_pada, diubah_oleh').eq('id', kid).single();
+    expect(new Date(data!.diubah_pada).getTime()).toBeGreaterThan(Date.parse('2021-01-01'));
+    const { data: ed } = await editor.from('editor').select('id').eq('email', 'kontrak-fungsi-db@test.local').single();
+    expect(data!.diubah_oleh).toBe(ed!.id);
   });
 
   test('tidak valid atau kontrak tidak ada: tidak ada yang berubah', async () => {

@@ -402,10 +402,14 @@ language plpgsql security invoker set search_path = public
 as $$
 declare
   v_kontrak_id uuid;
+  v_status status_vendor;
 begin
-  perform 1 from vendor where id = p_vendor_id for update;
+  select status into v_status from vendor where id = p_vendor_id for update;
   if not found then
     raise exception 'vendor_tidak_ditemukan';
+  end if;
+  if v_status not in ('survei_nego', 'booked') then
+    raise exception 'status_vendor_tidak_sesuai';
   end if;
   if exists (select 1 from kontrak where vendor_id = p_vendor_id) then
     raise exception 'kontrak_sudah_ada';
@@ -424,6 +428,9 @@ begin
   insert into alokasi_acara (kontrak_id, acara_id, nominal)
   select v_kontrak_id, (x ->> 'acara_id')::uuid, (x ->> 'nominal')::bigint
   from jsonb_array_elements(p_alokasi) x;
+
+  -- Kontrak manual berarti Vendor sudah Booked.
+  update vendor set status = 'booked' where id = p_vendor_id and status <> 'booked';
 
   return v_kontrak_id;
 end;
@@ -453,6 +460,9 @@ begin
   select p_kontrak_id, (x ->> 'acara_id')::uuid, (x ->> 'nominal')::bigint
   from jsonb_array_elements(p_alokasi) x
   on conflict (kontrak_id, acara_id) do update set nominal = excluded.nominal;
+
+  -- Perubahan harga dicatat di baris Kontrak supaya jejak audit-nya benar.
+  update kontrak set diubah_pada = now() where id = p_kontrak_id;
 end;
 $$;
 
