@@ -209,7 +209,7 @@ test('navigasi bawah menandai halaman aktif dan menu lainnya hanya berisi halama
   await nav.getByText('Lainnya').click();
   await expect(acara).toBeVisible();
   const lainnya = nav.locator('.menu-lainnya a');
-  await expect(lainnya).toHaveText(['Acara', 'Komparasi', 'Komponen']);
+  await expect(lainnya).toHaveText(['Acara', 'Komparasi', 'Komponen', 'Share Link']);
   for (const a of await lainnya.all()) {
     const href = await a.getAttribute('href');
     expect((await page.request.get(href!, { maxRedirects: 0 })).status()).toBe(200);

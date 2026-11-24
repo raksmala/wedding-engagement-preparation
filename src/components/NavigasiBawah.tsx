@@ -13,12 +13,12 @@ const UTAMA: Tautan[] = [
   { href: '/kontribusi', label: 'Kontribusi' },
 ];
 
-// Hanya halaman yang sudah ada. Share Link (Task 12) dan Pengaturan (Task 13) ditambahkan di sini
-// setelah halamannya dibuat.
+// Hanya halaman yang sudah ada. Pengaturan (Task 13) ditambahkan di sini setelah halamannya dibuat.
 const LAINNYA: Tautan[] = [
   { href: '/acara', label: 'Acara' },
   { href: '/komparasi', label: 'Komparasi' },
   { href: '/pengaturan/komponen', label: 'Komponen' },
+  { href: '/share', label: 'Share Link' },
 ];
 
 function aktif(pathname: string, href: string): boolean {

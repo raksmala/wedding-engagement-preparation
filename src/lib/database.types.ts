@@ -765,6 +765,57 @@ export type Database = {
           },
         ]
       }
+      share_link: {
+        Row: {
+          bagian: string[]
+          dibuat_oleh: string | null
+          dibuat_pada: string
+          dicabut_pada: string | null
+          diubah_oleh: string | null
+          diubah_pada: string
+          id: string
+          label: string
+          token: string
+        }
+        Insert: {
+          bagian: string[]
+          dibuat_oleh?: string | null
+          dibuat_pada?: string
+          dicabut_pada?: string | null
+          diubah_oleh?: string | null
+          diubah_pada?: string
+          id?: string
+          label: string
+          token?: string
+        }
+        Update: {
+          bagian?: string[]
+          dibuat_oleh?: string | null
+          dibuat_pada?: string
+          dicabut_pada?: string | null
+          diubah_oleh?: string | null
+          diubah_pada?: string
+          id?: string
+          label?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "share_link_dibuat_oleh_fkey"
+            columns: ["dibuat_oleh"]
+            isOneToOne: false
+            referencedRelation: "editor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "share_link_diubah_oleh_fkey"
+            columns: ["diubah_oleh"]
+            isOneToOne: false
+            referencedRelation: "editor"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tugas: {
         Row: {
           acara_id: string | null
@@ -1045,6 +1096,8 @@ export type Database = {
       }
     }
     Functions: {
+      baca_share_link: { Args: { p_token: string }; Returns: Json }
+      bagian_share_link_valid: { Args: { p_bagian: string[] }; Returns: boolean }
       editor_saat_ini: { Args: never; Returns: string }
       hapus_lampiran: {
         Args: { p_id: string; p_path: string; p_tabel: string }

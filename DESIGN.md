@@ -58,3 +58,5 @@ Garis tipis ganda berwarna `--primary` sebagai pemisah di bawah judul halaman, m
 - Keputusan visual yang belum ada di file ini (radius, jarak, bayangan) dicatat di sini beserta alasannya saat dibuat.
 - Navigasi bawah: bar tetap di bawah layar dengan latar `--bg` dan garis atas `--garis`. Halaman aktif ditandai garis atas 3px `--primary` dan huruf tebal, jadi tidak hanya dibedakan warna. Tinggi item 56px supaya mudah diketuk dengan jempol.
 - Dashboard: kelompok Terlambat diberi bingkai 2px `--primary` dan judul lebih besar sebagai satu-satunya titik fokus. Kelompok lain memakai gaya `bagian` biasa.
+- Halaman Pembaca (`/s/[token]`): tanpa navigasi bawah dan tanpa link ke halaman Editor. Wordmark "Rendy & Dinar" menjadi judul halaman dengan motif garis ganda, label Share Link di bawahnya. Kartu dan status memakai gaya yang sama dengan halaman Editor.
+- Pesan berhasil (misalnya "Link disalin") memakai bingkai 1px `--accent` dengan teks `--teks` tebal, pasangan dari `pesan-galat` yang berbingkai `--primary`. Statusnya tetap dibaca dari teks, bukan dari warna bingkai.
