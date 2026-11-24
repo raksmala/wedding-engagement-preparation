@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore, useTransition } from 'react';
 import { Kosong } from '@/components/Kosong';
 import { namaBagian } from '@/lib/shareLink';
 import { formatTanggalJamWib } from '@/lib/tanggal';
@@ -12,24 +12,55 @@ export type BarisShareLink = {
   label: string;
   bagian: string[];
   dicabut_pada: string | null;
-  // Null untuk link yang sudah dicabut.
-  url: string | null;
+  // Contoh "/s/{token}". Null untuk link yang sudah dicabut.
+  path: string | null;
 };
 
 type Pesan = { id: string; teks: string; berhasil: boolean };
+
+const tanpaLangganan = () => () => {};
+
+// Origin diambil dari alamat yang sedang dibuka di browser, bukan dari header request.
+// Saat render server dan hidrasi nilainya kosong, jadi kotak link menampilkan path saja dulu
+// dan hasil server sama dengan browser.
+function useOrigin(): string {
+  return useSyncExternalStore(
+    tanpaLangganan,
+    () => window.location.origin,
+    () => '',
+  );
+}
 
 export function DaftarShareLink({ baris }: { baris: BarisShareLink[] }) {
   const [cabut, setCabut] = useState<BarisShareLink>();
   const [galat, setGalat] = useState<string>();
   const [pesan, setPesan] = useState<Pesan>();
+  // Link yang baru dicabut. Fokus dipindah ke judul kartunya setelah daftar diperbarui.
+  const [fokus, setFokus] = useState<string>();
+  const sudahDifokus = useRef<string>(undefined);
+  const origin = useOrigin();
   const [memproses, mulai] = useTransition();
   const dialog = useRef<HTMLDialogElement>(null);
   const tombolBatal = useRef<HTMLButtonElement>(null);
 
+  // Tombol Cabut hilang setelah link dicabut, jadi fokus tidak boleh tertinggal di body.
+  useEffect(() => {
+    if (!fokus || sudahDifokus.current === fokus) return;
+    if (baris.find((b) => b.id === fokus)?.dicabut_pada) {
+      document.getElementById(`judul-share-${fokus}`)?.focus();
+      sudahDifokus.current = fokus;
+    }
+  }, [fokus, baris]);
+
+  // Gagal mencabut: fokus ke pesan galat supaya tidak jatuh ke body.
+  useEffect(() => {
+    if (galat) document.getElementById('galat-share')?.focus();
+  }, [galat]);
+
   async function salin(b: BarisShareLink) {
-    if (!b.url) return;
+    if (!b.path) return;
     try {
-      await navigator.clipboard.writeText(b.url);
+      await navigator.clipboard.writeText(`${window.location.origin}${b.path}`);
       setPesan({ id: b.id, teks: 'Link disalin', berhasil: true });
     } catch {
       // Clipboard tidak tersedia, misalnya izin ditolak browser. Teks link dipilih supaya bisa disalin manual.
@@ -54,6 +85,7 @@ export function DaftarShareLink({ baris }: { baris: BarisShareLink[] }) {
       setGalat(hasil.error);
       dialog.current?.close();
       setCabut(undefined);
+      if (!hasil.error) setFokus(id);
     });
   }
 
@@ -67,7 +99,7 @@ export function DaftarShareLink({ baris }: { baris: BarisShareLink[] }) {
       <section className="bagian" aria-labelledby="judul-daftar-share">
         <h2 id="judul-daftar-share">Daftar Share Link</h2>
         {galat && (
-          <p role="alert" className="pesan-galat">
+          <p role="alert" id="galat-share" tabIndex={-1} className="pesan-galat">
             {galat}
           </p>
         )}
@@ -77,7 +109,9 @@ export function DaftarShareLink({ baris }: { baris: BarisShareLink[] }) {
           <ul className="daftar-kartu" aria-label="Daftar Share Link">
             {baris.map((b) => (
               <li key={b.id} className="kartu">
-                <h3>{b.label}</h3>
+                <h3 id={`judul-share-${b.id}`} tabIndex={-1}>
+                  {b.label}
+                </h3>
                 <p>Bagian: {namaBagian(b.bagian)}</p>
                 {b.dicabut_pada ? (
                   <p>
@@ -89,7 +123,7 @@ export function DaftarShareLink({ baris }: { baris: BarisShareLink[] }) {
                     <span className="status-label status-aksen">Aktif</span>
                   </p>
                 )}
-                {b.url && (
+                {b.path && (
                   <>
                     <label className="tautan-share">
                       Link
@@ -97,7 +131,7 @@ export function DaftarShareLink({ baris }: { baris: BarisShareLink[] }) {
                         id={`link-${b.id}`}
                         type="text"
                         readOnly
-                        value={b.url}
+                        value={`${origin}${b.path}`}
                         onFocus={(e) => e.currentTarget.select()}
                       />
                     </label>

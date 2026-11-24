@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { JudulHalaman } from '@/components/JudulHalaman';
 import { Rupiah } from '@/components/Rupiah';
-import { LABEL_STATUS_VENDOR, StatusLabel } from '@/components/StatusLabel';
+import { StatusLabel } from '@/components/StatusLabel';
 import type { IsiShareLink } from '@/lib/shareLink';
 import { createAnonClient } from '@/lib/supabase/anon';
 import { formatTanggal, hariIniJakarta } from '@/lib/tanggal';
@@ -71,7 +71,7 @@ function SeksiVendor({ vendor }: { vendor: Vendor[] }) {
               <h3>{v.nama}</h3>
               <p className="teks-lembut">{v.kategori}</p>
               <p>
-                {Object.hasOwn(LABEL_STATUS_VENDOR, v.status) ? <StatusLabel status={v.status} /> : v.status}
+                <StatusLabel status={v.status} />
               </p>
               <p className={v.acara.length > 0 ? undefined : 'teks-lembut'}>
                 {v.acara.length > 0 ? `Acara: ${v.acara.join(', ')}` : 'Belum terhubung ke acara'}
@@ -118,7 +118,7 @@ function SeksiTugas({ tugas }: { tugas: Tugas[] }) {
 }
 
 function SeksiKeuangan({ keuangan }: { keuangan: Keuangan }) {
-  const totalKontribusi = keuangan.kontribusi.reduce((t, k) => t + Number(k.total), 0);
+  const totalKontribusi = keuangan.kontribusi.reduce((t, k) => t + k.total, 0);
   return (
     <section className="bagian" aria-labelledby="judul-keuangan">
       <h2 id="judul-keuangan">Keuangan</h2>
@@ -129,7 +129,7 @@ function SeksiKeuangan({ keuangan }: { keuangan: Keuangan }) {
       ) : (
         <ul className="daftar-kartu" aria-label="Kontrak vendor">
           {keuangan.vendor.map((v, i) => {
-            const sisa = Number(v.sisa);
+            const sisa = v.sisa;
             return (
               <li key={i} className="kartu">
                 <p className="baris-judul">
@@ -145,13 +145,13 @@ function SeksiKeuangan({ keuangan }: { keuangan: Keuangan }) {
                   <div>
                     <dt>Total</dt>
                     <dd>
-                      <Rupiah nilai={Number(v.total)} />
+                      <Rupiah nilai={v.total} />
                     </dd>
                   </div>
                   <div>
                     <dt>Terbayar</dt>
                     <dd>
-                      <Rupiah nilai={Number(v.terbayar)} />
+                      <Rupiah nilai={v.terbayar} />
                     </dd>
                   </div>
                   <div>
@@ -179,7 +179,7 @@ function SeksiKeuangan({ keuangan }: { keuangan: Keuangan }) {
             {keuangan.kontribusi.map((k, i) => (
               <li key={i}>
                 <span>{k.nama}</span>
-                <Rupiah nilai={Number(k.total)} />
+                <Rupiah nilai={k.total} />
               </li>
             ))}
           </ul>

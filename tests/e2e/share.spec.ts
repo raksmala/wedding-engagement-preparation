@@ -57,9 +57,14 @@ async function buatLinkDariForm(page: Page, label: string): Promise<string> {
   await expect(form.getByRole('status')).toContainText('Share Link dibuat');
   const item = kartu(page, label);
   await expect(item).toContainText('Aktif');
-  const url = await item.getByRole('textbox', { name: 'Link' }).inputValue();
-  expect(url).toMatch(/\/s\/[0-9a-f]{64}$/);
-  return url;
+  return urlLengkap(page, label);
+}
+
+// Origin ditambahkan di browser setelah hidrasi, jadi tunggu sampai kotak link berisi URL lengkap.
+async function urlLengkap(page: Page, label: string): Promise<string> {
+  const kotak = kartu(page, label).getByRole('textbox', { name: 'Link' });
+  await expect(kotak).toHaveValue(/^https?:\/\/[^/]+\/s\/[0-9a-f]{64}$/);
+  return kotak.inputValue();
 }
 
 test.beforeAll(async () => {
@@ -108,17 +113,26 @@ test('share link default tanpa keuangan, dibuka tanpa sesi, lalu dicabut', async
     await expect(pembaca.getByRole('heading', { level: 2, name: 'Tugas' })).toBeVisible();
     await expect(pembaca.getByRole('heading', { level: 2, name: 'Keuangan' })).toHaveCount(0);
     const vendor = pembaca.getByRole('list', { name: 'Daftar vendor' }).getByRole('listitem').filter({ hasText: 'Uji Share Venue' });
-    await expect(vendor).toContainText('Venue');
+    await expect(vendor.getByText('Venue', { exact: true })).toBeVisible();
     await expect(vendor).toContainText('Booked');
     await expect(vendor).toContainText('Acara: Resepsi');
 
-    // Tidak ada teks Rupiah sama sekali, dan nominal maupun kontak tidak ada di HTML mentahnya.
+    // Tidak ada teks Rupiah yang terlihat.
     expect(await pembaca.locator('body').innerText()).not.toContain('Rp');
-    const html = await pembaca.content();
-    expect(html).not.toContain('12345678');
-    expect(html).not.toContain('12.345.678');
-    expect(html).not.toContain('081298765432');
-    expect(html).not.toContain('Catatan vendor uji rahasia');
+    // Response mentah /s/{token} (HTML dan payload RSC) juga tidak memuat nominal atau kontak data uji.
+    const respons = await konteks.request.get(url);
+    expect(respons.status()).toBe(200);
+    const raw = await respons.text();
+    for (const terlarang of [
+      'Rp ',
+      'Rp\u00a0',
+      '12345678',
+      '12.345.678',
+      '081298765432',
+      'Catatan vendor uji rahasia',
+    ]) {
+      expect(raw, terlarang).not.toContain(terlarang);
+    }
     // Tidak ada jalan ke aplikasi Editor dari halaman Pembaca.
     await expect(pembaca.getByRole('link')).toHaveCount(0);
     await expect(pembaca.getByRole('navigation')).toHaveCount(0);
@@ -130,6 +144,8 @@ test('share link default tanpa keuangan, dibuka tanpa sesi, lalu dicabut', async
     await dialog.getByRole('button', { name: 'Cabut' }).click();
     await expect(dialog).toBeHidden();
     await expect(kartu(page, LABEL)).toContainText('Dicabut');
+    // Tombol Cabut sudah hilang, jadi fokus pindah ke judul kartu, bukan ke body.
+    await expect(kartu(page, LABEL).getByRole('heading', { name: LABEL })).toBeFocused();
     await expect(kartu(page, LABEL).getByRole('textbox')).toHaveCount(0);
     await expect(kartu(page, LABEL).getByRole('button')).toHaveCount(0);
 
@@ -159,7 +175,7 @@ test('dengan keuangan, Pembaca melihat Rupiah', async ({ page, browser }) => {
   await form.getByRole('button', { name: 'Buat link' }).click();
   const item = kartu(page, 'Uji Dengan Keuangan');
   await expect(item).toContainText('Bagian: Acara, Vendor, Tugas, Keuangan');
-  const url = await item.getByRole('textbox', { name: 'Link' }).inputValue();
+  const url = await urlLengkap(page, 'Uji Dengan Keuangan');
 
   const konteks = await browser.newContext();
   try {

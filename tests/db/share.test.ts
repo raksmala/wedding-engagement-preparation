@@ -21,6 +21,8 @@ const RAHASIA = {
   harga: 12345678,
 };
 const TERBAYAR = 2000000;
+const HARGA_BATAL = 4000000;
+const TERBAYAR_BATAL = 1500000;
 
 async function idByNama(tabel: string, nama: string): Promise<string> {
   const { data, error } = await editor.from(tabel).select('id').eq('nama', nama).single();
@@ -115,14 +117,51 @@ beforeAll(async () => {
   });
   if (et) throw et;
 
-  // Vendor batal tidak tampil di Share Link.
+  // Vendor batal tidak tampil di bagian vendor. Di keuangan hanya tampil kalau sudah ada yang Dibayar.
   const { error: evb } = await editor.from('vendor').insert({
     nama: 'Uji Share Batal',
     kategori_vendor_id: await idByNama('kategori_vendor', 'Dekorasi'),
     status: 'batal',
   });
   if (evb) throw evb;
+  await vendorBatalBerkontrak('Uji Share Batal Tanpa Bayar', 0);
+  await vendorBatalBerkontrak('Uji Share Batal Sudah Bayar', TERBAYAR_BATAL);
 });
+
+// Vendor Booked lewat pilih_paket, opsional dengan satu Pembayaran Dibayar, lalu ditandai batal.
+async function vendorBatalBerkontrak(nama: string, dibayar: number): Promise<void> {
+  const { data: v, error } = await editor
+    .from('vendor')
+    .insert({ nama, kategori_vendor_id: await idByNama('kategori_vendor', 'MUA') })
+    .select('id')
+    .single();
+  if (error) throw error;
+  const { error: eva } = await editor
+    .from('vendor_acara')
+    .insert({ vendor_id: v.id, acara_id: await idByNama('acara', 'Akad') });
+  if (eva) throw eva;
+  const { data: paket, error: ep } = await editor
+    .from('paket')
+    .insert({ vendor_id: v.id, nama: `Paket ${nama}`, harga: HARGA_BATAL })
+    .select('id')
+    .single();
+  if (ep) throw ep;
+  const { data: kontrakId, error: epp } = await editor.rpc('pilih_paket', { p_paket_id: paket.id });
+  if (epp) throw epp;
+  if (dibayar > 0) {
+    const { error: eb } = await editor.from('pembayaran').insert({
+      kontrak_id: kontrakId,
+      jenis: 'dp',
+      nominal: dibayar,
+      status: 'dibayar',
+      tanggal_bayar: '2026-11-21',
+      pihak_id: await idByNama('pihak', 'Dinar'),
+    });
+    if (eb) throw eb;
+  }
+  const { error: es } = await editor.from('vendor').update({ status: 'batal' }).eq('id', v.id);
+  if (es) throw es;
+}
 
 afterAll(async () => {
   try {
@@ -254,7 +293,7 @@ describe('baca_share_link', () => {
     expect(kunci(await baca(tokenAcara))).toEqual(['acara', 'label']);
   });
 
-  test('vendor tanpa kontak dan catatan, tugas tanpa catatan, vendor batal tidak tampil', async () => {
+  test('vendor tanpa kontak dan catatan, tugas tanpa catatan, vendor batal tidak tampil di vendor', async () => {
     const { token } = await buatLink('Uji Vendor', ['vendor', 'tugas', 'keuangan']);
     const data = await baca(token);
 
@@ -271,9 +310,30 @@ describe('baca_share_link', () => {
       status: 'belum',
     });
     const namaVendor = data.vendor.map((v: { nama: string }) => v.nama);
-    expect(namaVendor).not.toContain('Uji Share Batal');
-    expect(data.keuangan.vendor.map((v: { nama: string }) => v.nama)).not.toContain('Uji Share Batal');
+    for (const nama of ['Uji Share Batal', 'Uji Share Batal Tanpa Bayar', 'Uji Share Batal Sudah Bayar']) {
+      expect(namaVendor).not.toContain(nama);
+    }
     cekTanpaRahasia(JSON.stringify(data));
+  });
+
+  test('keuangan memuat vendor batal yang sudah dibayar, supaya Terbayar sama dengan Kontribusi', async () => {
+    const { token } = await buatLink('Uji Keuangan Batal', ['keuangan']);
+    const data = await baca(token);
+    const namaKeuangan = data.keuangan.vendor.map((v: { nama: string }) => v.nama);
+
+    expect(data.keuangan.vendor).toContainEqual({
+      nama: 'Uji Share Batal Sudah Bayar',
+      total: HARGA_BATAL,
+      terbayar: TERBAYAR_BATAL,
+      sisa: HARGA_BATAL - TERBAYAR_BATAL,
+    });
+    expect(namaKeuangan).not.toContain('Uji Share Batal Tanpa Bayar');
+    expect(namaKeuangan).not.toContain('Uji Share Batal');
+
+    // Setiap Pembayaran Dibayar punya Pihak dan masuk ke Kontrak yang tampil, jadi kedua jumlah selalu sama.
+    const terbayar = data.keuangan.vendor.reduce((t: number, v: { terbayar: number }) => t + v.terbayar, 0);
+    const kontribusi = data.keuangan.kontribusi.reduce((t: number, k: { total: number }) => t + k.total, 0);
+    expect(terbayar).toBe(kontribusi);
   });
 });
 
@@ -303,6 +363,15 @@ describe('tabel share_link', () => {
     }
     const { error: eLabel } = await editor.from('share_link').insert({ label: '   ', bagian: ['acara'] });
     expect(eLabel?.code).toBe('23514');
+    // Sama dengan PANJANG_LABEL_MAKS di aplikasi.
+    const { error: ePanjang } = await editor
+      .from('share_link')
+      .insert({ label: `Uji ${'x'.repeat(77)}`, bagian: ['acara'] });
+    expect(ePanjang?.code).toBe('23514');
+    const { error: ePas } = await editor
+      .from('share_link')
+      .insert({ label: `Uji ${'x'.repeat(76)}`, bagian: ['acara'] });
+    expect(ePas).toBeNull();
   });
 
   test('kolom audit diisi trigger', async () => {

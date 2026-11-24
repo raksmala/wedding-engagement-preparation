@@ -23,7 +23,8 @@ create table share_link (
   id uuid primary key default gen_random_uuid(),
   -- 32 byte acak dalam hex. Editor tidak bisa memilih token sendiri: kolom ini tidak ikut di grant insert.
   token text not null unique default encode(extensions.gen_random_bytes(32), 'hex'),
-  label text not null check (btrim(label) <> ''),
+  -- Batas panjang sama dengan PANJANG_LABEL_MAKS di src/lib/shareLink.ts.
+  label text not null check (btrim(label) <> '' and char_length(label) <= 80),
   bagian text[] not null check (bagian_share_link_valid(bagian)),
   -- Link aktif kalau null. Diisi database saat dicabut, dan tidak bisa dibuka lagi.
   dicabut_pada timestamptz,
@@ -88,12 +89,15 @@ grant execute on function bagian_share_link_valid(text[]) to authenticated, serv
 --   keuangan: {vendor: [{nama, total, terbayar, sisa}], kontribusi: [{nama, total}]}
 -- Kunci total, terbayar, dan sisa hanya muncul di dalam keuangan.
 --
--- Vendor berstatus batal tidak ditampilkan di bagian vendor maupun daftar vendor keuangan,
--- karena tidak lagi dipakai dan sisa tagihannya tidak akan dibayar. Kontribusi per Pihak tetap
--- menghitung semua Pembayaran yang sudah Dibayar, termasuk ke Vendor yang kemudian batal,
--- karena uang itu memang sudah keluar.
+-- Vendor berstatus batal tidak ditampilkan di bagian vendor, karena tidak lagi dipakai.
+-- Di daftar vendor keuangan, Vendor batal hanya tampil kalau sudah ada Pembayaran yang Dibayar,
+-- supaya jumlah Terbayar semua vendor sama dengan jumlah Kontribusi per Pihak. Kontrak Vendor
+-- batal tanpa Pembayaran Dibayar tidak tampil, karena tagihannya tidak akan dibayar.
+--
+-- search_path memuat pg_temp di akhir supaya objek sementara milik pemanggil tidak bisa
+-- menyamar sebagai tabel atau fungsi public.
 create function baca_share_link(p_token text) returns jsonb
-language plpgsql stable security definer set search_path = public
+language plpgsql stable security definer set search_path = public, pg_temp
 as $$
 declare
   v_label text;
@@ -180,7 +184,7 @@ begin
         )
         from ringkasan_kontrak r
         join vendor v on v.id = r.vendor_id
-        where v.status <> 'batal'
+        where v.status <> 'batal' or r.terbayar > 0
       ), '[]'::jsonb),
       'kontribusi', coalesce((
         select jsonb_agg(

@@ -35,7 +35,7 @@ export function FormShareLink() {
           autoComplete="off"
         />
       </label>
-      <fieldset aria-describedby="petunjuk-bagian">
+      <fieldset aria-describedby="petunjuk-bagian petunjuk-teks-bebas">
         <legend>Bagian yang ditampilkan</legend>
         {BAGIAN.map((b) => (
           <label key={b} className="pilihan">
@@ -51,6 +51,10 @@ export function FormShareLink() {
         <p id="petunjuk-bagian" className="teks-lembut">
           Keuangan menampilkan total, terbayar, dan Sisa Tagihan per vendor, serta Kontribusi per Pihak. Bukti
           transfer dan lampiran tidak pernah ditampilkan.
+        </p>
+        <p id="petunjuk-teks-bebas" className="teks-lembut">
+          Judul Tugas, nama vendor, nama acara, lokasi, dan perkiraan tanggal tampil persis seperti yang ditulis.
+          Jangan tulis nominal di sana, karena tetap terlihat walaupun Keuangan tidak dicentang.
         </p>
       </fieldset>
       <p>
