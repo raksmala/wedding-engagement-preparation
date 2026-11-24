@@ -543,3 +543,72 @@ describe('akses', () => {
     }
   });
 });
+
+describe('invariant kontrak dan link acara', () => {
+  async function siap(nama: string, acaraNama = ['Resepsi']) {
+    const v = await buatVendor(nama, 'Venue', acaraNama);
+    const p = await buatPaket(v, nama);
+    await editor.rpc('pilih_paket', {
+      p_paket_id: p,
+      p_alokasi: acaraNama.map((n) => ({ acara_id: acara[n], nominal: 100 })),
+    });
+    return { v, p, kid: await kontrakId(v) };
+  }
+
+  test('update acara_id di vendor_acara ditolak dan baris tidak berubah', async () => {
+    const { v } = await siap('Update Link', ['Lamaran']);
+    const { error } = await editor
+      .from('vendor_acara')
+      .update({ acara_id: acara['Resepsi'] })
+      .eq('vendor_id', v)
+      .eq('acara_id', acara['Lamaran']);
+    expect(error).not.toBeNull();
+    const { data } = await admin.from('vendor_acara').select('acara_id').eq('vendor_id', v);
+    expect(data).toEqual([{ acara_id: acara['Lamaran'] }]);
+  });
+
+  test('kontrak tidak bisa pindah vendor', async () => {
+    const { kid } = await siap('Pindah A');
+    const lain = await buatVendor('Pindah B', 'Venue', ['Resepsi']);
+    const { error } = await editor.from('kontrak').update({ vendor_id: lain }).eq('id', kid);
+    expect(error?.message).toContain('kontrak_pindah_vendor');
+  });
+
+  test('paket kontrak harus milik vendor yang sama', async () => {
+    const { kid, p } = await siap('Paket Milik A');
+    const lain = await buatVendor('Paket Milik B', 'Venue', ['Resepsi']);
+    const pLain = await buatPaket(lain, 'Milik B');
+    const { error } = await editor.from('kontrak').update({ paket_id: pLain }).eq('id', kid);
+    expect(error?.message).toContain('paket_bukan_milik_vendor');
+    const { error: eIns } = await editor.from('kontrak').insert({ vendor_id: lain, paket_id: p });
+    expect(eIns?.message).toContain('paket_bukan_milik_vendor');
+    const { error: eNull } = await editor.from('kontrak').update({ paket_id: null }).eq('id', kid);
+    expect(eNull).toBeNull();
+  });
+
+  test('kontrak tanpa alokasi ditolak saat commit', async () => {
+    const v = await buatVendor('Tanpa Alokasi', 'Venue', ['Resepsi']);
+    const { error } = await editor.from('kontrak').insert({ vendor_id: v });
+    expect(error?.message).toContain('kontrak_tanpa_alokasi');
+  });
+
+  test('menghapus alokasi terakhir ditolak', async () => {
+    const { kid } = await siap('Alokasi Terakhir');
+    const { error } = await editor.from('alokasi_acara').delete().eq('kontrak_id', kid);
+    expect(error?.message).toContain('kontrak_tanpa_alokasi');
+    const { count } = await editor
+      .from('alokasi_acara')
+      .select('id', { count: 'exact', head: true })
+      .eq('kontrak_id', kid);
+    expect(count).toBe(1);
+  });
+
+  test('menghapus kontrak dan vendor beralokasi tetap berhasil', async () => {
+    const a = await siap('Hapus Kontrak');
+    const { error } = await editor.from('kontrak').delete().eq('id', a.kid);
+    expect(error).toBeNull();
+    const b = await siap('Hapus Vendor Cascade');
+    const { error: eV } = await editor.from('vendor').delete().eq('id', b.v);
+    expect(eV).toBeNull();
+  });
+});

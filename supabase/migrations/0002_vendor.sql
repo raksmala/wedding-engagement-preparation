@@ -72,6 +72,8 @@ alter table log_kontak enable row level security;
 
 revoke all on kategori_vendor, vendor, vendor_acara, log_kontak from anon;
 grant select, insert, update, delete on kategori_vendor, vendor, vendor_acara, log_kontak to authenticated;
+-- Relasi Vendor-Acara tidak punya isi yang bisa diubah: hanya ditambah atau dilepas.
+revoke update on vendor_acara from authenticated;
 grant all on kategori_vendor, vendor, vendor_acara, log_kontak to service_role;
 
 create policy kategori_vendor_editor on kategori_vendor for all to authenticated

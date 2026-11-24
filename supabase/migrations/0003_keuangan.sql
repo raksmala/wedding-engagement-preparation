@@ -289,3 +289,62 @@ $$;
 
 revoke all on function pilih_paket(uuid, jsonb) from public, anon;
 grant execute on function pilih_paket(uuid, jsonb) to authenticated;
+
+-- Kontrak tidak pindah Vendor, dan Paket-nya harus milik Vendor yang sama.
+create function tolak_kontrak_pindah_vendor() returns trigger
+language plpgsql security invoker set search_path = public
+as $$
+begin
+  if new.vendor_id is distinct from old.vendor_id then
+    raise exception 'kontrak_pindah_vendor';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger kontrak_pindah_vendor before update of vendor_id on kontrak
+  for each row execute function tolak_kontrak_pindah_vendor();
+
+create function tolak_paket_bukan_milik_vendor() returns trigger
+language plpgsql security invoker set search_path = public
+as $$
+begin
+  if new.paket_id is not null and not exists (
+    select 1 from paket p where p.id = new.paket_id and p.vendor_id = new.vendor_id
+  ) then
+    raise exception 'paket_bukan_milik_vendor';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger paket_milik_vendor before insert or update of vendor_id, paket_id on kontrak
+  for each row execute function tolak_paket_bukan_milik_vendor();
+
+-- Setiap Kontrak minimal punya satu Alokasi Acara, dicek saat commit supaya
+-- pilih_paket boleh menghapus lalu mengisi ulang barisnya.
+create function pastikan_kontrak_beralokasi() returns trigger
+language plpgsql security invoker set search_path = public
+as $$
+declare
+  v_kontrak_id uuid;
+begin
+  if tg_table_name = 'kontrak' then
+    v_kontrak_id := new.id;
+  else
+    v_kontrak_id := old.kontrak_id;
+  end if;
+  if exists (select 1 from kontrak k where k.id = v_kontrak_id)
+     and not exists (select 1 from alokasi_acara a where a.kontrak_id = v_kontrak_id) then
+    raise exception 'kontrak_tanpa_alokasi';
+  end if;
+  return null;
+end;
+$$;
+
+create constraint trigger kontrak_beralokasi after insert on kontrak
+  deferrable initially deferred
+  for each row execute function pastikan_kontrak_beralokasi();
+create constraint trigger kontrak_beralokasi_hapus after delete or update of kontrak_id on alokasi_acara
+  deferrable initially deferred
+  for each row execute function pastikan_kontrak_beralokasi();
