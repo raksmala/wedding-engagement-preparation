@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import { normalisasiWhatsApp } from '@/lib/whatsapp';
 
 const STATUS = ['kandidat', 'survei_nego', 'booked', 'selesai', 'batal'] as const;
 type Status = (typeof STATUS)[number];
@@ -53,6 +54,11 @@ export async function simpanVendor(formData: FormData): Promise<HasilSimpanVendo
   if (nilai.acara_id.some((a) => !UUID.test(a))) return gagal('Acara tidak dikenali.');
   if (nilai.link && !/^https?:\/\/\S+$/i.test(nilai.link)) {
     return gagal('Link harus diawali http:// atau https://.');
+  }
+  if (nilai.whatsapp) {
+    const wa = normalisasiWhatsApp(nilai.whatsapp);
+    if (!wa) return gagal('Nomor WhatsApp tidak dikenali. Contoh: 0812-3456-7890.');
+    nilai.whatsapp = wa;
   }
   const acaraId = [...new Set(nilai.acara_id)];
 
