@@ -1097,7 +1097,10 @@ export type Database = {
     }
     Functions: {
       baca_share_link: { Args: { p_token: string }; Returns: Json }
-      bagian_share_link_valid: { Args: { p_bagian: string[] }; Returns: boolean }
+      bagian_share_link_valid: {
+        Args: { p_bagian: string[] }
+        Returns: boolean
+      }
       editor_saat_ini: { Args: never; Returns: string }
       hapus_lampiran: {
         Args: { p_id: string; p_path: string; p_tabel: string }
