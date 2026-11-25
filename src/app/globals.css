@@ -642,6 +642,38 @@ details summary {
   font-weight: 600;
 }
 
+/* display:flex menghapus penanda bawaan <summary>, jadi chevron digambar sendiri. */
+details:not(.lainnya) > summary {
+  gap: 0.5rem;
+  list-style: none;
+}
+
+details:not(.lainnya) > summary::-webkit-details-marker {
+  display: none;
+}
+
+details:not(.lainnya) > summary::after {
+  content: "";
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-left: auto;
+  border-right: 2px solid var(--primary);
+  border-bottom: 2px solid var(--primary);
+  transform: rotate(45deg);
+  transition: transform 0.15s;
+}
+
+details[open]:not(.lainnya) > summary::after {
+  transform: rotate(-135deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  details:not(.lainnya) > summary::after {
+    transition: none;
+  }
+}
+
 .kartu-kontribusi {
   padding: 0 1rem;
 }
