@@ -1,14 +1,21 @@
 # Delivery Gate Fase 1
 
-**Status: BELUM LULUS: menunggu verifikasi manual Rendy**
+**Status: LULUS untuk semua yang bisa dicek di project dev. Tinggal cek di produksi (`docs/deploy.md` langkah 10).**
 
-Laporan ini disusun pada 24 November 2026 (Task 14) tanpa menjalankan apa pun: tidak ada `node_modules`, tidak ada akses ke Supabase atau Vercel, dan tidak ada browser. Yang ditandai PASS atau FAIL di bawah hanya yang benar-benar dicek, yaitu hitungan kontras dan pemeriksaan statis lewat `grep` dan membaca kode. Semua yang butuh aplikasi berjalan ditandai BELUM DICEK, BELUM DIJALANKAN, atau BELUM DIVERIFIKASI.
+Laporan pertama disusun 24 November 2026 (Task 14) tanpa menjalankan apa pun. Pada 25 November 2026 semua test dan checklist dijalankan terhadap project dev setelah `npx supabase db reset --linked`. Hasilnya:
 
-Pembaruan (commit "fix: tutup celah delivery gate fase 1"): halaman 404 Indonesia, filter Acara dan Vendor di Tugas, test e2e Pembayaran Terjadwal di kelompok Terlambat, dan tap target link alamat web vendor sudah diperbaiki di kode. Semuanya baru dicek sintaksnya, belum dijalankan di browser atau lewat test, jadi tetap BELUM DIVERIFIKASI. Rinciannya di bagian 6.
+- Test di bagian 4 semuanya PASS.
+- Tabel elemen di bagian 3 terisi di 375px dan desktop, tanpa FAIL yang tersisa.
+- Tiga FAIL baru ditemukan dan sudah diperbaiki, rinciannya di bagian 6.
 
-Pembaruan kedua (commit "fix: pindahkan proxy ke src dan rapikan panduan deploy"): `middleware.ts` di root ternyata tidak pernah dijalankan karena aplikasi memakai `src/app`, sekarang dipindah ke `src/proxy.ts`. Warna placeholder diatur, `/acara/{id}` punya halaman tidak ditemukan sendiri, judul tab halaman 404, angka kontras tombol nonaktif dikoreksi, dan urutan `docs/deploy.md` dirapikan. Semuanya juga BELUM DIVERIFIKASI.
+Yang belum bisa dicek di dev:
 
-Gate ini baru lulus kalau semua test di bagian 4 PASS, tabel elemen di bagian 3 terisi tanpa FAIL di 375px dan desktop, dan temuan FAIL di bagian 6 sudah diperbaiki atau diputuskan Rendy.
+- Pengalihan ke Google dan kembali lewat `/auth/callback`.
+- Sesi yang bertahan lebih dari 1 jam.
+- Ikon PWA.
+- Kriteria PRD 3 dan 6, yang butuh data asli.
+
+Gate ini lulus karena semua test di bagian 4 PASS, tabel elemen di bagian 3 terisi tanpa FAIL di 375px dan desktop, dan semua FAIL di bagian 6 sudah diperbaiki.
 
 ## 1. Hasil kontras (dihitung)
 
@@ -51,16 +58,16 @@ Teks besar (judul Cormorant 1.375rem sampai 2rem) semuanya memakai `--primary` d
 |---|---|---|
 | Tidak ada em dash di `src`, `tests`, `docs`, `DESIGN.md`, `CONTEXT.md`, migration, `public` | PASS | `grep -rn` untuk karakter em dash (U+2014) hanya menemukan `docs/plans/fase-1.md:24`, yaitu aturan yang menyebut karakternya. Tidak ada en dash. File baru di commit ini juga dicek: 0 hasil |
 | Tidak ada em dash di pesan commit | PASS | `git log --format=%B` disaring dengan `grep -c` untuk U+2014: 0 |
-| File proxy (refresh sesi) terbaca Next.js | **FAIL**, diperbaiki di kode, BELUM DIVERIFIKASI | `middleware.ts` ada di root, padahal aplikasi memakai `src/app`. Next.js hanya membaca file itu di `src/` (sejajar dengan `app/`), jadi refresh sesi tidak pernah berjalan. Dipindah ke `src/proxy.ts` dengan fungsi `proxy` (nama baru di Next.js 16), `config.matcher` sama. Helper `src/lib/supabase/middleware.ts` tidak diubah |
+| File proxy (refresh sesi) terbaca Next.js | **FAIL**, diperbaiki. PASS di build (25 Nov): output menyebut `Proxy (Middleware)`. Sesi lebih dari 1 jam dicek di produksi | `middleware.ts` ada di root, padahal aplikasi memakai `src/app`. Next.js hanya membaca file itu di `src/` (sejajar dengan `app/`), jadi refresh sesi tidak pernah berjalan. Dipindah ke `src/proxy.ts` dengan fungsi `proxy` (nama baru di Next.js 16), `config.matcher` sama. Helper `src/lib/supabase/middleware.ts` tidak diubah |
 | Tidak ada `outline: none` tanpa pengganti | PASS | `grep -rn outline src` hanya menemukan `:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px }` dan `.navigasi-bawah :focus-visible { outline-offset: -4px }` |
 | Setiap halaman data punya `loading.tsx` dan `error.tsx` | PASS | Lihat daftar di bawah. Boundary di folder induk berlaku untuk halaman di bawahnya |
-| Halaman 404 berbahasa Indonesia | Diperbaiki, BELUM DIVERIFIKASI | Sebelumnya FAIL: tidak ada `src/app/not-found.tsx`. Sekarang ada, berisi judul "Rendy & Dinar", pesan "Halaman tidak ditemukan.", dan link "Kembali ke dashboard" ke `/`. Halaman root ini hanya dipakai untuk URL yang tidak cocok dengan route mana pun (misalnya `/tidak-ada`). Dirender di layout root, jadi tanpa navigasi bawah, dengan judul tab "Halaman tidak ditemukan \| Rendy & Dinar". Setiap `notFound()` sekarang punya `not-found.tsx` sendiri di dalam `(app)`, jadi tampil dengan navigasi bawah: `acara/[id]` (baru, "Acara tidak ditemukan"), `vendor/[id]` (termasuk `vendor/[id]/ubah`), `vendor/[id]/paket`, dan `komparasi/[kategoriId]` |
+| Halaman 404 berbahasa Indonesia | Diperbaiki. PASS (25 Nov, `tests/gate/interaksi.spec.ts`) | Sebelumnya FAIL: tidak ada `src/app/not-found.tsx`. Sekarang ada, berisi judul "Rendy & Dinar", pesan "Halaman tidak ditemukan.", dan link "Kembali ke dashboard" ke `/`. Halaman root ini hanya dipakai untuk URL yang tidak cocok dengan route mana pun (misalnya `/tidak-ada`). Dirender di layout root, jadi tanpa navigasi bawah, dengan judul tab "Halaman tidak ditemukan \| Rendy & Dinar". Setiap `notFound()` sekarang punya `not-found.tsx` sendiri di dalam `(app)`, jadi tampil dengan navigasi bawah: `acara/[id]` (baru, "Acara tidak ditemukan"), `vendor/[id]` (termasuk `vendor/[id]/ubah`), `vendor/[id]/paket`, dan `komparasi/[kategoriId]` |
 | Tidak ada link ke route yang tidak ada | PASS | Semua `href`, `redirect()`, `router.push/replace`, dan `action` form dicocokkan ke `page.tsx`. Daftar di bawah |
 | Kata dari daftar `_Avoid_` `CONTEXT.md` di teks UI | PASS setelah perbaikan | Dua teks memakai "tahap" (dihindari untuk Status Vendor), diperbaiki di commit ini. Sisanya positif palsu, lihat di bawah |
 | Warna hanya dari token | PASS dengan catatan | `grep -rnoE "#[0-9a-fA-F]{3,8}"` di `src` dan `public`: selain token di `:root`, hanya `#fff` (6 kali di `globals.css`), `rgb(43 35 37 / 0.5)` untuk backdrop, serta `#80172c` dan `#f5efef` literal di `layout.tsx` (`themeColor`) dan `manifest.webmanifest`. Semuanya sekarang tercatat di `DESIGN.md` beserta alasan dan kontrasnya |
 | Satu-satunya inline style | Dicatat | `src/app/login/page.tsx`: `padding: 2rem 1rem; maxWidth: 480; margin: 0 auto`. Nilainya dicatat di `DESIGN.md` bagian Layout |
-| Tap target 44px untuk link yang berdiri sendiri | PASS setelah perbaikan, BELUM DIVERIFIKASI | Empat link tanpa class 44px diberi `tautan-aksi` di commit Task 14. Sisa terakhir, link alamat web vendor di `<dd>` detail Vendor (`vendor/[id]/page.tsx`), sekarang juga memakai `tautan-aksi`. URL panjang tetap bisa patah baris karena `.rincian dd` memakai `overflow-wrap: anywhere`. Cek di 375px |
-| Tombol nonaktif terlihat nonaktif | Diperbaiki di kode, BELUM DIVERIFIKASI | Sebelumnya `.tombol-sekunder` tidak punya gaya `:disabled`, sehingga "Simpan status", "Naik", dan "Turun" yang nonaktif terlihat sama dengan yang aktif. Ditambah `opacity: 0.7; cursor: not-allowed` di commit ini |
+| Tap target 44px untuk link yang berdiri sendiri | PASS setelah perbaikan (25 Nov: sapu `tests/gate` menemukan lebar "Ubah" dan "Lihat" 35 sampai 36px, diperbaiki dengan `min-width: 44px`) | Empat link tanpa class 44px diberi `tautan-aksi` di commit Task 14. Sisa terakhir, link alamat web vendor di `<dd>` detail Vendor (`vendor/[id]/page.tsx`), sekarang juga memakai `tautan-aksi`. URL panjang tetap bisa patah baris karena `.rincian dd` memakai `overflow-wrap: anywhere`. Cek di 375px |
+| Tombol nonaktif terlihat nonaktif | Diperbaiki. PASS (25 Nov: "Simpan status", "Naik", "Turun" nonaktif di `tests/gate/interaksi.spec.ts` dan cek visual) | Sebelumnya `.tombol-sekunder` tidak punya gaya `:disabled`, sehingga "Simpan status", "Naik", dan "Turun" yang nonaktif terlihat sama dengan yang aktif. Ditambah `opacity: 0.7; cursor: not-allowed` di commit ini |
 | `lang="id"` di `<html>` | PASS | `src/app/layout.tsx` |
 | Nominal memakai `tabular-nums` | PASS | `.rupiah` dipakai di `Rupiah.tsx`, sel Harga Komparasi, dan Harga di daftar Paket |
 
@@ -123,157 +130,186 @@ Kata yang dicari: admin, user, akun, payer, sponsor, viewer, penonton, public li
 
 ## 3. Checklist elemen per halaman
 
-Kolom "Aksi yang diharapkan" diisi dari kode. Kolom 375px dan Desktop diisi Rendy setelah mengklik setiap elemen di `next dev` (atau produksi): tulis PASS atau FAIL dan catatannya.
+Dicek 25 November 2026 di `next dev` dengan data uji dari `tests/gate/data.ts` (5 Vendor, 3 Paket, Kontrak dengan 3 Pembayaran, Log Kontak, Tugas, dan 2 Share Link). Viewport 375x812 dan 1280x800. Kode bukti di kolom Catatan:
+
+- **S**: `tests/gate/gate.spec.ts`, sapu 35 URL di kedua viewport (70 tampilan). Per tampilan dicek: tanpa scroll horizontal, semua target ketuk minimal 44x44 px di 375px (checkbox diukur dari label pembungkusnya), semua link internal membalas 200, link `target="_blank"` memakai `rel="noopener"`, setiap elemen yang bisa difokus lewat Tab punya outline yang terlihat, dan tanpa error di console. Hasil: 0 temuan, 932 titik fokus, 612 link.
+- **I**: `tests/gate/interaksi.spec.ts`, klik dan keyboard sungguhan di kedua viewport.
+- **G**: `tests/gate/galat.spec.ts`, galat dipaksa dengan mencabut grant sebentar di project dev.
+- **E**: `tests/e2e/*.spec.ts` (Desktop Chrome 1280x720, beberapa juga 375px). Untuk baris yang perilakunya hanya diuji E, kolom 375px berisi PASS dari S (tata letak, target ketuk, link, fokus), dan perilakunya diuji di desktop.
+
+Jalankan ulang: `npx playwright test -c playwright.gate.config.ts`.
 
 | Halaman | Elemen | Aksi yang diharapkan | 375px | Desktop | Catatan |
 |---|---|---|---|---|---|
-| Semua halaman `(app)` | Navigasi "Dashboard" | Ke `/`. Aktif: garis atas 3px dan huruf tebal | BELUM DICEK | BELUM DICEK | |
-| Semua halaman `(app)` | Navigasi "Vendor" | Ke `/vendor`. Aktif juga di semua `/vendor/...` | BELUM DICEK | BELUM DICEK | |
-| Semua halaman `(app)` | Navigasi "Tugas" | Ke `/tugas` | BELUM DICEK | BELUM DICEK | |
-| Semua halaman `(app)` | Navigasi "Kontribusi" | Ke `/kontribusi` | BELUM DICEK | BELUM DICEK | |
-| Semua halaman `(app)` | Navigasi "Lainnya" | Membuka menu. Tertutup lagi lewat Escape (fokus kembali ke "Lainnya"), ketukan di luar menu, atau pindah halaman. Ditandai aktif kalau halaman sekarang ada di menu | BELUM DICEK | BELUM DICEK | |
-| Semua halaman `(app)` | Menu Lainnya: "Acara", "Komparasi", "Pengaturan", "Share Link" | Ke `/acara`, `/komparasi`, `/pengaturan`, `/share` | BELUM DICEK | BELUM DICEK | |
-| Semua halaman `(app)` | "Coba lagi" di tampilan error | Memanggil `reset()` dan memuat ulang bagian halaman | BELUM DICEK | BELUM DICEK | Perlu memaksa error, misalnya mematikan jaringan |
-| `/login` | "Masuk dengan Google" | Label jadi "Mengalihkan ke Google...", tombol nonaktif, lalu ke layar Google. Setelah login kembali lewat `/auth/callback` ke `/` | BELUM DICEK | BELUM DICEK | Hanya bisa dicek dengan OAuth sungguhan |
-| `/login?error=bukan-editor` | Pesan galat | Tampil "Akun ini tidak terdaftar sebagai Editor." | BELUM DICEK | BELUM DICEK | |
-| `/login?error=gagal-masuk` | Pesan galat | Tampil "Gagal masuk. Coba lagi." | BELUM DICEK | BELUM DICEK | |
-| `/` Dashboard | "Tambah vendor" (tampilan kosong) | Ke `/vendor/baru`. Hanya tampil kalau belum ada Vendor dan belum ada Tugas sama sekali | BELUM DICEK | BELUM DICEK | |
-| `/` Dashboard | Item Pembayaran Terjadwal lewat Jatuh Tempo | Tampil di kelompok Terlambat dengan judul "{Jenis} {Vendor}", nominal, dan label Terlambat. Hitungan kelompok bertambah satu | BELUM DICEK | BELUM DICEK | Baru diuji e2e di `dashboard.spec.ts` ("pembayaran terjadwal yang lewat jatuh tempo..."), belum dijalankan |
-| `/` Dashboard | "Selesai" di item Tugas | Menandai Tugas selesai, item hilang, hitungan kelompok berkurang, fokus pindah ke judul kelompok | BELUM DICEK | BELUM DICEK | |
-| `/` Dashboard | "Tandai dibayar" di item Pembayaran | Membuka atau menutup form di dalam kartu | BELUM DICEK | BELUM DICEK | |
-| `/` Dashboard | Form tandai dibayar: "Simpan" | Tanpa Pihak: pesan galat. Dengan Pihak: item hilang, fokus ke judul kelompok | BELUM DICEK | BELUM DICEK | |
-| `/` Dashboard | Form tandai dibayar: "Batal" | Form tertutup, fokus kembali ke "Tandai dibayar" | BELUM DICEK | BELUM DICEK | |
-| `/` Dashboard | Link nama Vendor dan nama Acara di item | Ke `/vendor/{id}` dan `/acara/{id}` | BELUM DICEK | BELUM DICEK | |
-| `/acara` | "Tambah acara" (atas dan di tampilan kosong) | Ke `/acara/baru` | BELUM DICEK | BELUM DICEK | |
-| `/acara` | "Ubah" per kartu | Ke `/acara/{id}` | BELUM DICEK | BELUM DICEK | |
-| `/acara/baru` | "Simpan" | Menyimpan Acara lalu kembali ke `/acara`. Nama kosong ditolak browser (`required`) | BELUM DICEK | BELUM DICEK | |
-| `/acara/baru` | "Kembali ke daftar acara" | Ke `/acara` | BELUM DICEK | BELUM DICEK | Diberi `tautan-aksi` di commit ini |
-| `/acara/{id}` | "Simpan" | Menyimpan perubahan lalu kembali ke `/acara` | BELUM DICEK | BELUM DICEK | |
-| `/acara/{id}` | "Hapus acara" | Membuka dialog konfirmasi | BELUM DICEK | BELUM DICEK | |
-| `/acara/{id}` | Dialog: "Hapus" | Menghapus lalu ke `/acara`. Acara yang dipakai Vendor menampilkan pesan galat di dialog | BELUM DICEK | BELUM DICEK | |
-| `/acara/{id}` | Dialog: "Batal" | Dialog tertutup | BELUM DICEK | BELUM DICEK | |
-| `/acara/{id}` | "Kembali ke daftar acara" | Ke `/acara` | BELUM DICEK | BELUM DICEK | Diberi `tautan-aksi` di commit ini |
-| `/vendor` | "Tambah vendor" | Ke `/vendor/baru` | BELUM DICEK | BELUM DICEK | |
-| `/vendor` | Filter Kategori, Status, Acara, lalu "Terapkan" | Memuat `/vendor?kategori=&status=&acara=` dengan pilihan tetap terpilih | BELUM DICEK | BELUM DICEK | |
-| `/vendor` | Tampilan kosong: "Lihat semua vendor" atau "Tambah vendor" | Dengan filter: ke `/vendor`. Tanpa filter: ke `/vendor/baru` | BELUM DICEK | BELUM DICEK | |
-| `/vendor` | "Lihat" per kartu | Ke `/vendor/{id}` | BELUM DICEK | BELUM DICEK | |
-| `/vendor/baru` | Isian WhatsApp | Nomor tidak dikenali menampilkan "Nomor WhatsApp tidak dikenali" saat mengetik | BELUM DICEK | BELUM DICEK | |
-| `/vendor/baru` | "Simpan" | Menyimpan Vendor dan Acara-nya, lalu ke `/vendor/{id}`. Gagal: pesan galat, isian tetap | BELUM DICEK | BELUM DICEK | |
-| `/vendor/baru` | "Kembali ke daftar vendor" | Ke `/vendor` | BELUM DICEK | BELUM DICEK | |
-| `/vendor/{id}` | "Ubah status" + "Simpan status" | Tombol nonaktif selama status belum diganti. Simpan mengubah label status | BELUM DICEK | BELUM DICEK | Gaya nonaktif baru di commit ini |
-| `/vendor/{id}` | Link alamat web vendor | Membuka tab baru, hanya untuk `http(s)://` | BELUM DICEK | BELUM DICEK | Sekarang memakai `tautan-aksi` (tinggi 44px, huruf tebal). Cek URL panjang tidak melebarkan halaman di 375px |
-| `/vendor/{id}` | "Chat WhatsApp" | Membuka `https://wa.me/62...` di tab baru. Tidak tampil kalau nomor tidak dikenali | BELUM DICEK | BELUM DICEK | |
-| `/vendor/{id}` | "Ubah vendor" | Ke `/vendor/{id}/ubah` | BELUM DICEK | BELUM DICEK | |
-| `/vendor/{id}` | "Bandingkan paket di kategori ini" | Ke `/komparasi/{kategoriId}` | BELUM DICEK | BELUM DICEK | |
-| `/vendor/{id}` Paket | "Tambah paket" (kosong dan di bawah daftar) | Ke `/vendor/{id}/paket/baru` | BELUM DICEK | BELUM DICEK | |
-| `/vendor/{id}` Paket | "Ubah paket" | Ke `/vendor/{id}/paket/{paketId}/ubah` | BELUM DICEK | BELUM DICEK | |
-| `/vendor/{id}` Paket, Kontrak, bukti | Isian "Unggah lampiran ..." | Memilih JPG, PNG, WEBP, atau PDF maks 10 MB. Tampil "Memproses...", lalu file muncul di daftar. Tipe atau ukuran salah: pesan galat | BELUM DICEK | BELUM DICEK | |
-| `/vendor/{id}` Paket, Kontrak, bukti | Link nama file lampiran | Membuka signed URL di tab baru | BELUM DICEK | BELUM DICEK | |
-| `/vendor/{id}` Paket, Kontrak, bukti | "Hapus" lampiran, lalu dialog "Hapus" atau "Batal" | Dialog konfirmasi dengan nama file. Hapus menghilangkan file, Batal menutup dialog | BELUM DICEK | BELUM DICEK | |
-| `/vendor/{id}` Kontrak (belum ada) | "Buat kontrak" | Membuka form harga per Acara. Tampil kalau status Survei/Nego atau Booked dan Vendor punya Acara | BELUM DICEK | BELUM DICEK | |
-| `/vendor/{id}` Kontrak (belum ada) | Form: "Simpan kontrak" dan "Batal" | Simpan membuat Kontrak dan Vendor jadi Booked. Batal menutup form | BELUM DICEK | BELUM DICEK | |
-| `/vendor/{id}` Kontrak (belum ada) | "Hubungkan ke acara" | Ke `/vendor/{id}/ubah`. Tampil kalau Vendor belum punya Acara | BELUM DICEK | BELUM DICEK | |
-| `/vendor/{id}` Kontrak | "Ubah harga per acara", lalu "Simpan harga" atau "Batal" | Form harga per Acara. Simpan memperbarui Total. Semua kosong: "Isi harga untuk minimal satu acara." | BELUM DICEK | BELUM DICEK | |
-| `/vendor/{id}` Kontrak | "Ubah data kontrak", lalu "Simpan data kontrak" atau "Batal" | Form tanggal kesepakatan dan catatan | BELUM DICEK | BELUM DICEK | |
-| `/vendor/{id}` Pembayaran | "Tambah pembayaran" | Membuka form. Status Dibayar memunculkan Tanggal bayar dan Dibayar oleh | BELUM DICEK | BELUM DICEK | |
-| `/vendor/{id}` Pembayaran | Form: "Simpan pembayaran" dan "Batal" | Simpan menambah baris dan memperbarui Sisa Tagihan. Gagal: pesan galat, isian tetap | BELUM DICEK | BELUM DICEK | |
-| `/vendor/{id}` Pembayaran | "Tandai dibayar" per baris Terjadwal, lalu "Simpan" atau "Batal" | Form tanggal bayar dan Pihak. Simpan mengubah status jadi Dibayar | BELUM DICEK | BELUM DICEK | |
-| `/vendor/{id}` Pembayaran | "Ubah" per baris | Mengganti kartu dengan form berisi data baris itu | BELUM DICEK | BELUM DICEK | |
-| `/vendor/{id}` Pembayaran | "Hapus" per baris, lalu dialog "Hapus" atau "Batal" | Dialog dengan fokus di Batal. Hapus menghilangkan baris | BELUM DICEK | BELUM DICEK | |
-| `/vendor/{id}` Pembayaran | "Bukti transfer (n)" | Membuka atau menutup bagian unggah bukti | BELUM DICEK | BELUM DICEK | |
-| `/vendor/{id}` Log Kontak | "Tambah log kontak", lalu "Simpan log kontak" atau "Batal" | Form tanggal, saluran, isi | BELUM DICEK | BELUM DICEK | |
-| `/vendor/{id}` Log Kontak | "Lihat semua tugas" | Ke `/tugas` | BELUM DICEK | BELUM DICEK | |
-| `/vendor/{id}` Log Kontak | "Buat follow-up", lalu "Simpan tugas" atau "Batal" | Form judul, Jatuh Tempo, PIC. Tugas tampil di bawah log dan di `/tugas` | BELUM DICEK | BELUM DICEK | |
-| `/vendor/{id}` Log Kontak | "Hapus", lalu dialog "Hapus" atau "Batal" | Menghapus log. Tugas follow-up tetap ada | BELUM DICEK | BELUM DICEK | |
-| `/vendor/{id}` | "Kembali ke daftar vendor" | Ke `/vendor` | BELUM DICEK | BELUM DICEK | |
-| `/vendor/{id}` tidak ada | "Kembali ke daftar vendor" | Ke `/vendor` | BELUM DICEK | BELUM DICEK | |
-| `/vendor/{id}/ubah` | "Simpan" | Menyimpan lalu ke `/vendor/{id}` | BELUM DICEK | BELUM DICEK | |
-| `/vendor/{id}/ubah` | "Kembali ke detail vendor" | Ke `/vendor/{id}` | BELUM DICEK | BELUM DICEK | |
-| `/vendor/{id}/paket/baru` dan `/ubah` | "Atur Komponen" | Ke `/pengaturan/komponen?kategori={id}` | BELUM DICEK | BELUM DICEK | Isian form yang belum disimpan hilang saat pindah halaman |
-| `/vendor/{id}/paket/baru` dan `/ubah` | "Simpan paket" | Menyimpan Paket dan nilai Komponen, lalu ke `/vendor/{id}`. Harga tidak terbaca: pesan galat, isian tetap | BELUM DICEK | BELUM DICEK | |
-| `/vendor/{id}/paket/baru` dan `/ubah` | "Kembali ke detail vendor" | Ke `/vendor/{id}` | BELUM DICEK | BELUM DICEK | |
-| `/vendor/{id}/paket/...` tidak ada | "Kembali ke daftar vendor" | Ke `/vendor` | BELUM DICEK | BELUM DICEK | |
-| `/komparasi` | "Lihat vendor" (tampilan kosong) | Ke `/vendor` | BELUM DICEK | BELUM DICEK | |
-| `/komparasi` | "Bandingkan" per kategori | Ke `/komparasi/{kategoriId}` | BELUM DICEK | BELUM DICEK | |
-| `/komparasi/{kategoriId}` | Filter Acara, "Tampilkan vendor batal", "Terapkan" | Memuat `?acara=&batal=1` | BELUM DICEK | BELUM DICEK | |
-| `/komparasi/{kategoriId}` | Tabel geser | Hanya tabel yang bergeser, kolom label menempel di kiri, halaman tidak melebar. Bisa digeser dengan keyboard setelah difokus | BELUM DICEK | BELUM DICEK | |
-| `/komparasi/{kategoriId}` | Link nama Vendor di kepala kolom | Ke `/vendor/{id}` | BELUM DICEK | BELUM DICEK | |
-| `/komparasi/{kategoriId}` | "Pilih paket ini" | Membuka dialog. Vendor beberapa Acara: isian nominal per Acara. Tanpa Acara: penjelasan, tombol Pilih nonaktif | BELUM DICEK | BELUM DICEK | |
-| `/komparasi/{kategoriId}` | Dialog: "Pilih paket" dan "Batal" | Pilih menjadikan Paket Dipilih, Vendor Booked, Paket lain Tidak dipilih. Batal (fokus awal) menutup dialog | BELUM DICEK | BELUM DICEK | |
-| `/komparasi/{kategoriId}` | Tampilan kosong: "Lihat semua paket" atau "Lihat vendor" | Ke `/komparasi/{kategoriId}` atau `/vendor` | BELUM DICEK | BELUM DICEK | |
-| `/komparasi/{kategoriId}` | "Kembali ke daftar kategori" | Ke `/komparasi` | BELUM DICEK | BELUM DICEK | |
-| `/komparasi/{kategoriId}` tidak ada | "Kembali ke komparasi" | Ke `/komparasi` | BELUM DICEK | BELUM DICEK | |
-| `/tugas` | Filter PIC, Acara, Vendor, Status, "Terapkan" | Memuat `/tugas?pic=&acara=&vendor=&status=` dengan pilihan tetap terpilih. Default status "Belum selesai". Id yang bukan uuid diabaikan | BELUM DICEK | BELUM DICEK | Acara dan Vendor baru ditambah. Di 375px satu kolom, di 560px ke atas dua kolom dengan "Terapkan" di baris sendiri (`.filter-empat`) |
-| `/tugas` | Filter Acara | Hanya Tugas yang terkait Acara itu. Urutan pilihan sama dengan filter Vendor (tanggal, lalu nama) | BELUM DICEK | BELUM DICEK | Diuji `tugas.spec.ts` ("filter acara..."), belum dijalankan |
-| `/tugas` | Filter Vendor | Hanya Tugas yang terkait Vendor itu. Pilihan diurutkan per nama | BELUM DICEK | BELUM DICEK | Diuji `tugas.spec.ts` ("filter vendor..."), belum dijalankan |
-| `/tugas` | "Tambah tugas", lalu "Simpan tugas" atau "Batal" | Form di atas daftar. Judul kosong ditolak dengan pesan | BELUM DICEK | BELUM DICEK | |
-| `/tugas` | "Selesai" atau "Buka lagi" per Tugas | Mengubah status Tugas | BELUM DICEK | BELUM DICEK | |
-| `/tugas` | "Ubah" per Tugas | Mengganti kartu dengan form. Tugas follow-up: Vendor terkunci | BELUM DICEK | BELUM DICEK | |
-| `/tugas` | "Hapus", lalu dialog "Hapus" atau "Batal" | Menghapus Tugas | BELUM DICEK | BELUM DICEK | |
-| `/tugas` | Link nama Vendor dan nama Acara | Ke `/vendor/{id}` dan `/acara/{id}` | BELUM DICEK | BELUM DICEK | Diberi `tautan-aksi` di commit ini |
-| `/tugas` | "Hapus filter" (tampilan kosong dengan filter) | Ke `/tugas` | BELUM DICEK | BELUM DICEK | |
-| `/kontribusi` | "Lihat vendor" (tampilan kosong) | Ke `/vendor` | BELUM DICEK | BELUM DICEK | |
-| `/kontribusi` | Ringkasan per Pihak | Membuka atau menutup rincian per Vendor | BELUM DICEK | BELUM DICEK | |
-| `/kontribusi` | Link nama Vendor di rincian | Ke `/vendor/{id}` | BELUM DICEK | BELUM DICEK | |
-| `/pengaturan` | "Ubah nama", lalu "Simpan nama" atau "Batal" | Form nama di dalam kartu, fokus langsung ke isian. Setelah ditutup fokus kembali ke "Ubah nama" | BELUM DICEK | BELUM DICEK | Untuk Pihak dan Kategori Vendor |
-| `/pengaturan` | "Arsipkan" atau "Aktifkan lagi" | Mengubah status arsip, label "Diarsipkan" muncul atau hilang | BELUM DICEK | BELUM DICEK | |
-| `/pengaturan` | "Hapus", lalu dialog "Hapus" atau "Batal" | Hanya untuk item yang belum dipakai. Setelah dihapus fokus ke judul section | BELUM DICEK | BELUM DICEK | |
-| `/pengaturan` | "Tambah pihak" dan "Tambah kategori" | Menambah item. Nama ganda ditolak dengan pesan | BELUM DICEK | BELUM DICEK | |
-| `/pengaturan` | "Atur komponen pembanding" | Ke `/pengaturan/komponen` | BELUM DICEK | BELUM DICEK | |
-| `/pengaturan/komponen` | Pilih Kategori, lalu "Pilih" | Memuat `?kategori={id}` | BELUM DICEK | BELUM DICEK | |
-| `/pengaturan/komponen` | "Naik" dan "Turun" | Menggeser urutan. Nonaktif di baris pertama dan terakhir | BELUM DICEK | BELUM DICEK | Gaya nonaktif baru di commit ini |
-| `/pengaturan/komponen` | "Ubah" per Komponen | Ke `?kategori={id}&ubah={komponenId}`, form berisi data Komponen | BELUM DICEK | BELUM DICEK | |
-| `/pengaturan/komponen` | "Hapus", lalu dialog "Hapus" atau "Batal" | Dialog menyebut jumlah Paket yang nilainya ikut terhapus | BELUM DICEK | BELUM DICEK | |
-| `/pengaturan/komponen` | "Simpan komponen" dan "Batal ubah" | Simpan menambah atau mengubah. Batal ubah ke `?kategori={id}` | BELUM DICEK | BELUM DICEK | |
-| `/pengaturan/komponen` | "Kembali ke pengaturan" | Ke `/pengaturan` | BELUM DICEK | BELUM DICEK | |
-| `/share` | "Buat link" | Membuat Share Link. Keuangan tidak tercentang secara default. Nama kosong atau tanpa bagian ditolak dengan pesan | BELUM DICEK | BELUM DICEK | |
-| `/share` | Kotak link | Teks terpilih saat difokus | BELUM DICEK | BELUM DICEK | |
-| `/share` | "Salin link" | Menyalin alamat lengkap, tampil "Link disalin". Clipboard ditolak: teks dipilih dan pesan salin manual | BELUM DICEK | BELUM DICEK | |
-| `/share` | "Cabut", lalu dialog "Cabut" atau "Batal" | Link jadi "Dicabut", kotak link hilang, fokus ke judul kartu | BELUM DICEK | BELUM DICEK | |
-| `/s/{token}` | (tidak ada tombol atau link) | Menampilkan label dan bagian yang dicentang saja. Token dicabut atau tidak ada: "Link ini sudah tidak aktif." | BELUM DICEK | BELUM DICEK | Sengaja tanpa link ke halaman Editor |
-| `/s/{token}` | "Coba lagi" di tampilan error | Memanggil `reset()` | BELUM DICEK | BELUM DICEK | |
-| URL yang tidak cocok dengan route mana pun | "Kembali ke dashboard" | Halaman 404 Indonesia tanpa navigasi bawah, judul tab "Halaman tidak ditemukan \| Rendy & Dinar". Link ke `/`. Belum login: `(app)/layout.tsx` mengalihkan ke `/login` | BELUM DICEK | BELUM DICEK | `src/app/not-found.tsx` baru |
-| `/acara/{id}` tidak ada | "Kembali ke daftar acara" | "Acara tidak ditemukan" dengan navigasi bawah. Link ke `/acara` | BELUM DICEK | BELUM DICEK | `(app)/acara/[id]/not-found.tsx` baru, sama dengan versi Vendor |
+| Semua halaman `(app)` | Navigasi "Dashboard" | Ke `/`. Aktif: garis atas 3px dan huruf tebal | PASS | PASS | S. E "navigasi bawah menandai halaman aktif..." |
+| Semua halaman `(app)` | Navigasi "Vendor" | Ke `/vendor`. Aktif juga di semua `/vendor/...` | PASS | PASS | S. I "menu Lainnya": aktif di `/vendor/{id}` |
+| Semua halaman `(app)` | Navigasi "Tugas" | Ke `/tugas` | PASS | PASS | S. E "navigasi bawah..." |
+| Semua halaman `(app)` | Navigasi "Kontribusi" | Ke `/kontribusi` | PASS | PASS | S. I "menu Lainnya" |
+| Semua halaman `(app)` | Navigasi "Lainnya" | Membuka menu. Tertutup lagi lewat Escape (fokus kembali ke "Lainnya"), ketukan di luar menu, atau pindah halaman. Ditandai aktif kalau halaman sekarang ada di menu | PASS | PASS | E (klik di luar, Escape, tanda aktif). I (fokus kembali ke "Lainnya" setelah Escape, menu tertutup setelah pindah halaman) |
+| Semua halaman `(app)` | Menu Lainnya: "Acara", "Komparasi", "Pengaturan", "Share Link" | Ke `/acara`, `/komparasi`, `/pengaturan`, `/share` | PASS | PASS | S. E (keempat link membalas 200). I (Share Link) |
+| Semua halaman `(app)` | "Coba lagi" di tampilan error | Mengambil ulang data dan memuat ulang bagian halaman | PASS | PASS | G. **Sempat FAIL**: semua `error.tsx` memanggil `reset()`, yang di Next.js 16 tidak mengambil ulang data server, jadi halaman tetap error walaupun galatnya sudah hilang. Diganti `retry()` di 11 file. G diuji di 1280px, tombolnya sama di 375px (S) |
+| `/login` | "Masuk dengan Google" | Label jadi "Mengalihkan ke Google...", tombol nonaktif, lalu ke layar Google. Setelah login kembali lewat `/auth/callback` ke `/` | PASS sebagian | PASS sebagian | I: label dan status nonaktif. Pengalihan ke Google dan kembali lewat callback hanya bisa dicek dengan OAuth sungguhan (`docs/deploy.md` langkah 10) |
+| `/login?error=bukan-editor` | Pesan galat | Tampil "Akun ini tidak terdaftar sebagai Editor." | PASS | PASS | I. E "email di luar allowlist..." |
+| `/login?error=gagal-masuk` | Pesan galat | Tampil "Gagal masuk. Coba lagi." | PASS | PASS | I |
+| `/` Dashboard | "Tambah vendor" (tampilan kosong) | Ke `/vendor/baru`. Hanya tampil kalau belum ada Vendor dan belum ada Tugas sama sekali | PASS | PASS | E "tanpa data sama sekali..." |
+| `/` Dashboard | Item Pembayaran Terjadwal lewat Jatuh Tempo | Tampil di kelompok Terlambat dengan judul "{Jenis} {Vendor}", nominal, dan label Terlambat. Hitungan kelompok bertambah satu | PASS | PASS | E "pembayaran terjadwal yang lewat jatuh tempo...". S dengan Termin terlambat di data uji |
+| `/` Dashboard | "Selesai" di item Tugas | Menandai Tugas selesai, item hilang, hitungan kelompok berkurang, fokus pindah ke judul kelompok | PASS | PASS | E "selesai di tugas terlambat...". I (fokus ke judul "Terlambat") |
+| `/` Dashboard | "Tandai dibayar" di item Pembayaran | Membuka atau menutup form di dalam kartu | PASS | PASS | I (`aria-expanded`) |
+| `/` Dashboard | Form tandai dibayar: "Simpan" | Tanpa Pihak: pesan galat. Dengan Pihak: item hilang, fokus ke judul kelompok | PASS | PASS | I (tanpa Pihak). E "tandai dibayar dari dashboard..." |
+| `/` Dashboard | Form tandai dibayar: "Batal" | Form tertutup, fokus kembali ke "Tandai dibayar" | PASS | PASS | I |
+| `/` Dashboard | Link nama Vendor dan nama Acara di item | Ke `/vendor/{id}` dan `/acara/{id}` | PASS | PASS | I (Vendor). S (kedua link membalas 200, target 44px) |
+| `/acara` | "Tambah acara" (atas dan di tampilan kosong) | Ke `/acara/baru` | PASS | PASS | S, E. Tampilan kosong tidak dicek: 4 Acara default selalu ada |
+| `/acara` | "Ubah" per kartu | Ke `/acara/{id}` | PASS | PASS | S. **Sempat FAIL** di 375px: lebar 36px. `.tautan-aksi` diberi `min-width: 44px` |
+| `/acara/baru` | "Simpan" | Menyimpan Acara lalu kembali ke `/acara`. Nama kosong ditolak browser (`required`) | PASS | PASS | E "menambah dan menghapus Acara..." |
+| `/acara/baru` | "Kembali ke daftar acara" | Ke `/acara` | PASS | PASS | I |
+| `/acara/{id}` | "Simpan" | Menyimpan perubahan lalu kembali ke `/acara` | PASS | PASS | E "mengubah tanggal dan lokasi...". I |
+| `/acara/{id}` | "Hapus acara" | Membuka dialog konfirmasi | PASS | PASS | E, I |
+| `/acara/{id}` | Dialog: "Hapus" | Menghapus lalu ke `/acara`. Acara yang dipakai Vendor menampilkan pesan galat di dialog | PASS | PASS | E (hapus). I dan E vendor "menghapus Acara yang dipakai vendor..." (pesan galat) |
+| `/acara/{id}` | Dialog: "Batal" | Dialog tertutup | PASS | PASS | I. E (Escape) |
+| `/acara/{id}` | "Kembali ke daftar acara" | Ke `/acara` | PASS | PASS | S |
+| `/vendor` | "Tambah vendor" | Ke `/vendor/baru` | PASS | PASS | S. E "tambah vendor..." |
+| `/vendor` | Filter Kategori, Status, Acara, lalu "Terapkan" | Memuat `/vendor?kategori=&status=&acara=` dengan pilihan tetap terpilih | PASS | PASS | E "filter lewat form memakai query string". S dengan filter terisi |
+| `/vendor` | Tampilan kosong: "Lihat semua vendor" atau "Tambah vendor" | Dengan filter: ke `/vendor`. Tanpa filter: ke `/vendor/baru` | PASS | PASS | E "filter tanpa hasil...". S (`?kategori=Katering&status=batal`) |
+| `/vendor` | "Lihat" per kartu | Ke `/vendor/{id}` | PASS | PASS | S. **Sempat FAIL** di 375px: lebar 35px, diperbaiki bersama "Ubah" Acara |
+| `/vendor/baru` | Isian WhatsApp | Nomor tidak dikenali menampilkan "Nomor WhatsApp tidak dikenali" saat mengetik | PASS | PASS | E "nomor WhatsApp tidak dikenali..." |
+| `/vendor/baru` | "Simpan" | Menyimpan Vendor dan Acara-nya, lalu ke `/vendor/{id}`. Gagal: pesan galat, isian tetap | PASS | PASS | E "tambah vendor..." |
+| `/vendor/baru` | "Kembali ke daftar vendor" | Ke `/vendor` | PASS | PASS | S |
+| `/vendor/{id}` | "Ubah status" + "Simpan status" | Tombol nonaktif selama status belum diganti. Simpan mengubah label status | PASS | PASS | I. E "mengubah status..." |
+| `/vendor/{id}` | Link alamat web vendor | Membuka tab baru, hanya untuk `http(s)://` | PASS | PASS | I (`target="_blank"`, `rel="noopener"`). S: URL 104 karakter terpotong rapi, halaman tidak melebar di 375px |
+| `/vendor/{id}` | "Chat WhatsApp" | Membuka `https://wa.me/62...` di tab baru. Tidak tampil kalau nomor tidak dikenali | PASS | PASS | I (`081...` jadi `wa.me/6281...`, nomor `12345` tanpa tombol). E |
+| `/vendor/{id}` | "Ubah vendor" | Ke `/vendor/{id}/ubah` | PASS | PASS | I, S |
+| `/vendor/{id}` | "Bandingkan paket di kategori ini" | Ke `/komparasi/{kategoriId}` | PASS | PASS | I, S |
+| `/vendor/{id}` Paket | "Tambah paket" (kosong dan di bawah daftar) | Ke `/vendor/{id}/paket/baru` | PASS | PASS | S. E "tambah Komponen dan Paket..." |
+| `/vendor/{id}` Paket | "Ubah paket" | Ke `/vendor/{id}/paket/{paketId}/ubah` | PASS | PASS | S |
+| `/vendor/{id}` Paket, Kontrak, bukti | Isian "Unggah lampiran ..." | Memilih JPG, PNG, WEBP, atau PDF maks 10 MB. Tampil "Memproses...", lalu file muncul di daftar. Tipe atau ukuran salah: pesan galat | PASS | PASS | I (Paket). E paket "lampiran: unggah PNG..., file salah ditolak". E pembayaran "lampiran kontrak dan bukti..." |
+| `/vendor/{id}` Paket, Kontrak, bukti | Link nama file lampiran | Membuka signed URL di tab baru | PASS | PASS | I (tab baru ke `/storage/v1/object/sign/...`) |
+| `/vendor/{id}` Paket, Kontrak, bukti | "Hapus" lampiran, lalu dialog "Hapus" atau "Batal" | Dialog konfirmasi dengan nama file. Hapus menghilangkan file, Batal menutup dialog | PASS | PASS | I (Batal, nama file di dialog). E (Hapus) |
+| `/vendor/{id}` Kontrak (belum ada) | "Buat kontrak" | Membuka form harga per Acara. Tampil kalau status Survei/Nego atau Booked dan Vendor punya Acara | PASS | PASS | I. E "kontrak manual untuk vendor tanpa paket..." |
+| `/vendor/{id}` Kontrak (belum ada) | Form: "Simpan kontrak" dan "Batal" | Simpan membuat Kontrak dan Vendor jadi Booked. Batal menutup form | PASS | PASS | E (Simpan). I (Batal) |
+| `/vendor/{id}` Kontrak (belum ada) | "Hubungkan ke acara" | Ke `/vendor/{id}/ubah`. Tampil kalau Vendor belum punya Acara | PASS | PASS | I |
+| `/vendor/{id}` Kontrak | "Ubah harga per acara", lalu "Simpan harga" atau "Batal" | Form harga per Acara. Simpan memperbarui Total. Semua kosong: "Isi harga untuk minimal satu acara." | PASS | PASS | E "ubah harga per acara mengubah total". I (semua kosong, Batal) |
+| `/vendor/{id}` Kontrak | "Ubah data kontrak", lalu "Simpan data kontrak" atau "Batal" | Form tanggal kesepakatan dan catatan | PASS | PASS | I |
+| `/vendor/{id}` Pembayaran | "Tambah pembayaran" | Membuka form. Status Dibayar memunculkan Tanggal bayar dan Dibayar oleh | PASS | PASS | E "DP dibayar..." |
+| `/vendor/{id}` Pembayaran | Form: "Simpan pembayaran" dan "Batal" | Simpan menambah baris dan memperbarui Sisa Tagihan. Gagal: pesan galat, isian tetap | PASS | PASS | E "form pembayaran menahan isian saat gagal..." |
+| `/vendor/{id}` Pembayaran | "Tandai dibayar" per baris Terjadwal, lalu "Simpan" atau "Batal" | Form tanggal bayar dan Pihak. Simpan mengubah status jadi Dibayar | PASS | PASS | E (Simpan). I (Batal) |
+| `/vendor/{id}` Pembayaran | "Ubah" per baris | Mengganti kartu dengan form berisi data baris itu | PASS | PASS | I. E "ubah pembayaran dan hapus..." |
+| `/vendor/{id}` Pembayaran | "Hapus" per baris, lalu dialog "Hapus" atau "Batal" | Dialog dengan fokus di Batal. Hapus menghilangkan baris | PASS | PASS | E "...hapus lewat konfirmasi dengan fokus di Batal" |
+| `/vendor/{id}` Pembayaran | "Bukti transfer (n)" | Membuka atau menutup bagian unggah bukti | PASS | PASS | I |
+| `/vendor/{id}` Log Kontak | "Tambah log kontak", lalu "Simpan log kontak" atau "Batal" | Form tanggal, saluran, isi | PASS | PASS | E tugas "log kontak whatsapp dan follow-up..." |
+| `/vendor/{id}` Log Kontak | "Lihat semua tugas" | Ke `/tugas` | PASS | PASS | I, S |
+| `/vendor/{id}` Log Kontak | "Buat follow-up", lalu "Simpan tugas" atau "Batal" | Form judul, Jatuh Tempo, PIC. Tugas tampil di bawah log dan di `/tugas` | PASS | PASS | E tugas "log kontak whatsapp dan follow-up..." |
+| `/vendor/{id}` Log Kontak | "Hapus", lalu dialog "Hapus" atau "Batal" | Menghapus log. Tugas follow-up tetap ada | PASS | PASS | I |
+| `/vendor/{id}` | "Kembali ke daftar vendor" | Ke `/vendor` | PASS | PASS | I |
+| `/vendor/{id}` tidak ada | "Kembali ke daftar vendor" | Ke `/vendor` | PASS | PASS | S |
+| `/vendor/{id}/ubah` | "Simpan" | Menyimpan lalu ke `/vendor/{id}` | PASS | PASS | I "pelengkap" |
+| `/vendor/{id}/ubah` | "Kembali ke detail vendor" | Ke `/vendor/{id}` | PASS | PASS | I "pelengkap" |
+| `/vendor/{id}/paket/baru` dan `/ubah` | "Atur Komponen" | Ke `/pengaturan/komponen?kategori={id}` | PASS | PASS | I "pelengkap", S. Isian form yang belum disimpan tetap hilang saat pindah halaman (bagian 6) |
+| `/vendor/{id}/paket/baru` dan `/ubah` | "Simpan paket" | Menyimpan Paket dan nilai Komponen, lalu ke `/vendor/{id}`. Harga tidak terbaca: pesan galat, isian tetap | PASS | PASS | E paket "tambah Komponen dan Paket...", "harga yang tidak bisa dibaca..." |
+| `/vendor/{id}/paket/baru` dan `/ubah` | "Kembali ke detail vendor" | Ke `/vendor/{id}` | PASS | PASS | I "pelengkap", S |
+| `/vendor/{id}/paket/...` tidak ada | "Kembali ke daftar vendor" | Ke `/vendor` | PASS | PASS | S |
+| `/komparasi` | "Lihat vendor" (tampilan kosong) | Ke `/vendor` | PASS | PASS | E pembayaran "kontribusi kosong..." memakai pola yang sama. Tampilan kosong `/komparasi` sendiri tidak dicek: data uji selalu punya Paket |
+| `/komparasi` | "Bandingkan" per kategori | Ke `/komparasi/{kategoriId}` | PASS | PASS | E "daftar kategori menampilkan jumlah paket...". S |
+| `/komparasi/{kategoriId}` | Filter Acara, "Tampilkan vendor batal", "Terapkan" | Memuat `?acara=&batal=1` | PASS | PASS | E "filter acara dan toggle vendor batal". S |
+| `/komparasi/{kategoriId}` | Tabel geser | Hanya tabel yang bergeser, kolom label menempel di kiri, halaman tidak melebar. Bisa digeser dengan keyboard setelah difokus | PASS | PASS | E 375px. I (fokus, panah kanan menggeser di 375px). S |
+| `/komparasi/{kategoriId}` | Link nama Vendor di kepala kolom | Ke `/vendor/{id}` | PASS | PASS | S |
+| `/komparasi/{kategoriId}` | "Pilih paket ini" | Membuka dialog. Vendor beberapa Acara: isian nominal per Acara. Tanpa Acara: penjelasan, tombol Pilih nonaktif | PASS | PASS | E "vendor satu acara...", "vendor dua acara..." |
+| `/komparasi/{kategoriId}` | Dialog: "Pilih paket" dan "Batal" | Pilih menjadikan Paket Dipilih, Vendor Booked, Paket lain Tidak dipilih. Batal (fokus awal) menutup dialog | PASS | PASS | E (Pilih). I (fokus awal di Batal) |
+| `/komparasi/{kategoriId}` | Tampilan kosong: "Lihat semua paket" atau "Lihat vendor" | Ke `/komparasi/{kategoriId}` atau `/vendor` | PASS | PASS | I "pelengkap" (keduanya) |
+| `/komparasi/{kategoriId}` | "Kembali ke daftar kategori" | Ke `/komparasi` | PASS | PASS | I |
+| `/komparasi/{kategoriId}` tidak ada | "Kembali ke komparasi" | Ke `/komparasi` | PASS | PASS | S |
+| `/tugas` | Filter PIC, Acara, Vendor, Status, "Terapkan" | Memuat `/tugas?pic=&acara=&vendor=&status=` dengan pilihan tetap terpilih. Default status "Belum selesai". Id yang bukan uuid diabaikan | PASS | PASS | E "filter vendor...", "filter acara..., id tidak valid diabaikan". S dengan filter terisi |
+| `/tugas` | Filter Acara | Hanya Tugas yang terkait Acara itu. Urutan pilihan sama dengan filter Vendor (tanggal, lalu nama) | PASS | PASS | E "filter acara..." |
+| `/tugas` | Filter Vendor | Hanya Tugas yang terkait Vendor itu. Pilihan diurutkan per nama | PASS | PASS | E "filter vendor..." |
+| `/tugas` | "Tambah tugas", lalu "Simpan tugas" atau "Batal" | Form di atas daftar. Judul kosong ditolak dengan pesan | PASS | PASS | E "...form menolak judul kosong" |
+| `/tugas` | "Selesai" atau "Buka lagi" per Tugas | Mengubah status Tugas | PASS | PASS | E "tugas tanpa jatuh tempo, selesai, lalu dibuka lagi" |
+| `/tugas` | "Ubah" per Tugas | Mengganti kartu dengan form. Tugas follow-up: Vendor terkunci | PASS | PASS | I |
+| `/tugas` | "Hapus", lalu dialog "Hapus" atau "Batal" | Menghapus Tugas | PASS | PASS | I (fokus awal di Batal, Batal, Hapus) |
+| `/tugas` | Link nama Vendor dan nama Acara | Ke `/vendor/{id}` dan `/acara/{id}` | PASS | PASS | S |
+| `/tugas` | "Hapus filter" (tampilan kosong dengan filter) | Ke `/tugas` | PASS | PASS | I |
+| `/kontribusi` | "Lihat vendor" (tampilan kosong) | Ke `/vendor` | PASS | PASS | E "kontribusi kosong menampilkan petunjuk dan link ke vendor" |
+| `/kontribusi` | Ringkasan per Pihak | Membuka atau menutup rincian per Vendor | PASS | PASS | I |
+| `/kontribusi` | Link nama Vendor di rincian | Ke `/vendor/{id}` | PASS | PASS | I |
+| `/pengaturan` | "Ubah nama", lalu "Simpan nama" atau "Batal" | Form nama di dalam kartu, fokus langsung ke isian. Setelah ditutup fokus kembali ke "Ubah nama" | PASS | PASS | I (fokus). E "ganti nama Pihak..." (Simpan) |
+| `/pengaturan` | "Arsipkan" atau "Aktifkan lagi" | Mengubah status arsip, label "Diarsipkan" muncul atau hilang | PASS | PASS | E "arsipkan Kategori..." |
+| `/pengaturan` | "Hapus", lalu dialog "Hapus" atau "Batal" | Hanya untuk item yang belum dipakai. Setelah dihapus fokus ke judul section | PASS | PASS | E "...yang dipakai tidak bisa dihapus...". I (fokus ke judul section, Kategori) |
+| `/pengaturan` | "Tambah pihak" dan "Tambah kategori" | Menambah item. Nama ganda ditolak dengan pesan | PASS | PASS | E (Pihak, nama ganda). I "pelengkap" (Kategori) |
+| `/pengaturan` | "Atur komponen pembanding" | Ke `/pengaturan/komponen` | PASS | PASS | E "tautan Komponen pembanding..." |
+| `/pengaturan/komponen` | Pilih Kategori, lalu "Pilih" | Memuat `?kategori={id}` | PASS | PASS | E paket "tambah Komponen..." |
+| `/pengaturan/komponen` | "Naik" dan "Turun" | Menggeser urutan. Nonaktif di baris pertama dan terakhir | PASS | PASS | E "urutan Komponen bisa digeser...". I (nonaktif di ujung) |
+| `/pengaturan/komponen` | "Ubah" per Komponen | Ke `?kategori={id}&ubah={komponenId}`, form berisi data Komponen | PASS | PASS | I |
+| `/pengaturan/komponen` | "Hapus", lalu dialog "Hapus" atau "Batal" | Dialog menyebut jumlah Paket yang nilainya ikut terhapus | PASS | PASS | I ("2 paket"). E "menghapus Komponen yang sudah berisi..." |
+| `/pengaturan/komponen` | "Simpan komponen" dan "Batal ubah" | Simpan menambah atau mengubah. Batal ubah ke `?kategori={id}` | PASS | PASS | E (Simpan). I (Batal ubah) |
+| `/pengaturan/komponen` | "Kembali ke pengaturan" | Ke `/pengaturan` | PASS | PASS | I |
+| `/share` | "Buat link" | Membuat Share Link. Keuangan tidak tercentang secara default. Nama kosong atau tanpa bagian ditolak dengan pesan | PASS | PASS | E "share link default tanpa keuangan...", "form menolak nama link kosong dan tanpa bagian" |
+| `/share` | Kotak link | Teks terpilih saat difokus | PASS | PASS | I (diketuk sungguhan, seluruh teks terpilih) |
+| `/share` | "Salin link" | Menyalin alamat lengkap, tampil "Link disalin". Clipboard ditolak: teks dipilih dan pesan salin manual | PASS | PASS | E "salin link menampilkan 'Link disalin'". Jalur clipboard ditolak tidak dipaksa terpisah |
+| `/share` | "Cabut", lalu dialog "Cabut" atau "Batal" | Link jadi "Dicabut", kotak link hilang, fokus ke judul kartu | PASS | PASS | E "...lalu dicabut". I (fokus ke judul kartu) |
+| `/s/{token}` | (tidak ada tombol atau link) | Menampilkan label dan bagian yang dicentang saja. Token dicabut atau tidak ada: "Link ini sudah tidak aktif." | PASS | PASS | E share. S (link aktif dan dicabut, tanpa sesi) |
+| `/s/{token}` | "Coba lagi" di tampilan error | Mengambil ulang data | PASS | PASS | G. Sempat FAIL, diperbaiki bersama baris "Coba lagi" di atas |
+| URL yang tidak cocok dengan route mana pun | "Kembali ke dashboard" | Halaman 404 Indonesia tanpa navigasi bawah, judul tab "Halaman tidak ditemukan \| Rendy & Dinar". Link ke `/`. Belum login: `(app)/layout.tsx` mengalihkan ke `/login` | PASS | PASS | I (judul tab, tanpa navigasi, link). S |
+| `/acara/{id}` tidak ada | "Kembali ke daftar acara" | "Acara tidak ditemukan" dengan navigasi bawah. Link ke `/acara` | PASS | PASS | I, S |
 
 Route tanpa tampilan: `/auth/callback` (menukar code, memanggil `pastikan_editor()`, lalu ke `/` atau `/login?error=...`) dan `/api/dev-login` (404 di produksi). Keduanya dicek lewat langkah 10 di `docs/deploy.md`.
 
-## 4. Test yang harus dijalankan
+Cek visual di browser pane (375px: `/`, `/vendor`, `/vendor/{id}`; desktop: `/komparasi/{kategoriId}`): tidak ada yang terpotong atau bertumpuk. Kotak pilih file memakai teks bawaan browser ("Choose Files" di Chrome berbahasa Inggris). Di HP dengan bahasa Indonesia teks ini ikut bahasa perangkat, jadi tidak dianggap FAIL.
 
-Semua BELUM DIJALANKAN. Jalankan dengan `.env.local` berisi key project dev dan CLI ter-link ke project dev.
+## 4. Test yang dijalankan
 
-| Perintah | Isi | Hasil yang diharapkan | Status |
+Dijalankan 25 November 2026 dengan `.env.local` berisi key project dev dan CLI ter-link ke project dev (`rendy-dinar-dev`).
+
+| Perintah | Isi | Hasil | Status |
 |---|---|---|---|
-| `npx supabase db reset --linked` | Migration `0001` sampai `0006` | Tanpa error | BELUM DIJALANKAN |
-| `npx supabase gen types typescript --linked > src/lib/database.types.ts` | Types dari skema terbaru | File berubah sesuai skema, lalu di-commit | BELUM DIJALANKAN |
-| `npx tsc --noEmit` | Seluruh project | 0 error | BELUM DIJALANKAN |
-| `npm run lint` | ESLint | 0 error | BELUM DIJALANKAN |
-| `npx vitest run tests/unit` | 8 file: `komponen`, `lampiran`, `rupiah`, `shareLink`, `tanggal`, `tugas`, `validasi`, `whatsapp` | Semua PASS | BELUM DIJALANKAN |
-| `npx vitest run tests/db` | 10 file: `agenda`, `akses`, `keuangan`, `kontrak-fungsi`, `paket`, `pengaturan`, `share`, `storage`, `tugas`, `vendor` | Semua PASS, data `@test.local` terhapus setelahnya | BELUM DIJALANKAN |
-| `npx playwright test` | 11 file: `acara`, `dashboard`, `komparasi`, `login`, `paket`, `pembayaran`, `pengaturan`, `share`, `shell`, `tugas`, `vendor` | Semua PASS (config: retry 1, worker 1, Desktop Chrome, beberapa test memakai viewport 375px) | BELUM DIJALANKAN |
-| `npm run build` | Build produksi | Sukses, tanpa warning TypeScript | BELUM DIJALANKAN |
+| `npx supabase db reset --linked` | Migration `0001` sampai `0006` | Tanpa error. Data default: 5 Pihak, 4 Acara, 13 Kategori Vendor, bucket `lampiran` | PASS |
+| `npx supabase gen types typescript --linked` | Types dari skema terbaru | Sama persis dengan `src/lib/database.types.ts` (`diff -w` kosong), tidak perlu commit | PASS |
+| `npx tsc --noEmit` | Seluruh project | 0 error | PASS |
+| `npm run lint` | ESLint | 0 error | PASS |
+| `npx vitest run` | 18 file, 149 test (`tests/unit` dan `tests/db`) | 149 PASS | PASS |
+| `npx playwright test` | 11 file, 61 test | 61 PASS. Sebagian lulus di retry kedua, semuanya karena rate limit Supabase Auth di project dev (bagian 6) | PASS |
+| `npx playwright test -c playwright.gate.config.ts` | `tests/gate`: sapu 35 URL, 34 test interaksi, 2 test galat | 39 PASS | PASS |
+| `npm run build` | Build produksi | Sukses, tanpa warning TypeScript, output menyebut `Proxy (Middleware)` | PASS |
+
+Dua test di `tests/` diperbaiki sebelum lulus (commit `5b863d3`). Penyebabnya ada di test, bukan aplikasi:
+
+- `tests/db/agenda.test.ts`: bulk insert supabase-js mengirim kolom yang tidak diisi sebagai `null`, sehingga default `status` tidak terpakai. Ditambah `{ defaultToNull: false }`.
+- `tests/e2e/acara.spec.ts`: `allTextContents()` tidak menunggu, sehingga bisa terbaca saat `loading.tsx` masih tampil. Diganti `toHaveText()`.
 
 ## 5. Kriteria selesai Fase 1 (PRD)
 
 | No | Kriteria | Implementasi (commit dan file) | Test yang mencakup | Status |
 |---|---|---|---|---|
-| 1 | Rendy dan Dinar bisa login dari HP masing-masing dan melihat data yang sama | `7ff0ea9`, `975fb7c`. `supabase/migrations/0001_dasar.sql` (`is_editor()`, `pastikan_editor()`, RLS), `src/app/login/*`, `src/app/auth/callback/route.ts`, `src/proxy.ts` (dulu `middleware.ts` di root, tidak terbaca), `src/lib/supabase/*`, `src/app/(app)/layout.tsx`. Semua data dibaca lewat RLS yang sama untuk kedua Editor | `tests/db/akses.test.ts`, `tests/e2e/login.spec.ts` ("setelah dev-login..."). E2E memakai `/api/dev-login`, bukan Google sungguhan | BELUM DIVERIFIKASI. Login Google asli dan sesi yang bertahan lebih dari 1 jam hanya bisa dicek di produksi (`docs/deploy.md` langkah 10) |
-| 2 | Email Google lain ditolak | Sama dengan nomor 1. Callback memanggil `signOut()` lalu ke `/login?error=bukan-editor` | `tests/db/akses.test.ts` ("orang luar tidak bisa membaca apa pun", "email di allowlist tapi belum terkonfirmasi bukan editor", "anon tidak bisa memanggil pastikan_editor"), `tests/e2e/login.spec.ts` ("email di luar allowlist ditolak dengan pesan") | BELUM DIVERIFIKASI |
-| 3 | Semua vendor Lamaran yang sudah ada bisa diinput lengkap dengan Kontrak dan Pembayarannya | `28b8b18`, `f865d47`, `5f870ee`, `0274cf3`, `217e632`, `6798fa1`, `c7dc219`, `13dd3f3`. Migration `0002_vendor.sql`, `0003_keuangan.sql`, halaman `src/app/(app)/vendor/**` | `tests/e2e/vendor.spec.ts`, `paket.spec.ts`, `pembayaran.spec.ts`, `tests/db/vendor.test.ts`, `paket.test.ts`, `keuangan.test.ts`, `kontrak-fungsi.test.ts` | BELUM DIVERIFIKASI. Butuh Rendy menginput data vendor Lamaran yang asli |
-| 4 | Komparasi menampilkan minimal tiga Paket dari Vendor berbeda secara sejajar per Komponen, dan terbaca di layar HP | `481ee0f`. `src/app/(app)/komparasi/[kategoriId]/page.tsx`, `.tabel-geser` dan `.tabel-komparasi` di `globals.css` | `tests/e2e/komparasi.spec.ts` ("375px: baris berurutan, sel kosong, geser horizontal hanya di tabel, label tetap terlihat", memakai Paket A, B, C) | BELUM DIVERIFIKASI |
-| 5 | Pembayaran Terjadwal yang lewat Jatuh Tempo muncul di kelompok Terlambat | `fded50d`, `bf9ae6a`. View `agenda` di `0004_tugas.sql`, `kelompokJatuhTempo()` di `src/lib/tanggal.ts`, `src/app/(app)/page.tsx` | `tests/unit/tanggal.test.ts` ("mengelompokkan tanggal jatuh tempo"), `tests/db/agenda.test.ts` ("pembayaran terjadwal tampil..."), `tests/e2e/dashboard.spec.ts` ("pembayaran terjadwal yang lewat jatuh tempo masuk kelompok terlambat": Pelunasan dengan Jatuh Tempo kemarin, tanggal Jakarta, tampil di Terlambat dengan judul "Pelunasan Uji Venue Agenda" dan "Rp 5.000.000"). Celah sebelumnya (e2e Terlambat hanya memakai Tugas) sudah ditutup di kode | BELUM DIVERIFIKASI. Test baru belum dijalankan |
-| 6 | Rekap Kontribusi per Pihak sama dengan hasil hitung manual | `c7dc219`. View `kontribusi_pihak` dan `kontribusi_pihak_vendor` di `0003_keuangan.sql`, `src/app/(app)/kontribusi/page.tsx` | `tests/db/keuangan.test.ts` ("kontribusi per pihak"), `tests/e2e/pembayaran.spec.ts` ("DP dibayar, ... dan kontribusi") | BELUM DIVERIFIKASI. Butuh Rendy membandingkan dengan hitungan manual dari data asli |
-| 7 | Share Link tanpa centang Keuangan tidak memuat nominal apa pun, termasuk di response API | `5e311f7`, `957ce5e`, `1279d4f`. `baca_share_link()` di `0005_share_link.sql`, `src/app/s/[token]/page.tsx`, `src/lib/supabase/anon.ts` | `tests/db/share.test.ts` ("tanpa keuangan...", "kunci hasil persis sesuai bagian"), `tests/e2e/share.spec.ts` ("share link default tanpa keuangan...", mengecek teks halaman dan response mentah tidak memuat "Rp") | BELUM DIVERIFIKASI. Teks bebas (judul Tugas, nama vendor, lokasi) tetap tampil apa adanya, dan form sudah memperingatkan hal ini |
-| 8 | Lolos Delivery Gate antislop | Laporan ini | Bagian 1 sampai 4 | BELUM LULUS |
+| 1 | Rendy dan Dinar bisa login dari HP masing-masing dan melihat data yang sama | `7ff0ea9`, `975fb7c`. `supabase/migrations/0001_dasar.sql` (`is_editor()`, `pastikan_editor()`, RLS), `src/app/login/*`, `src/app/auth/callback/route.ts`, `src/proxy.ts` (dulu `middleware.ts` di root, tidak terbaca), `src/lib/supabase/*`, `src/app/(app)/layout.tsx`. Semua data dibaca lewat RLS yang sama untuk kedua Editor | `tests/db/akses.test.ts`, `tests/e2e/login.spec.ts` ("setelah dev-login..."). E2E memakai `/api/dev-login`, bukan Google sungguhan | PASS di dev (dev-login, RLS sama untuk kedua Editor). Login Google asli dan sesi lebih dari 1 jam dicek di produksi (`docs/deploy.md` langkah 10) |
+| 2 | Email Google lain ditolak | Sama dengan nomor 1. Callback memanggil `signOut()` lalu ke `/login?error=bukan-editor` | `tests/db/akses.test.ts` ("orang luar tidak bisa membaca apa pun", "email di allowlist tapi belum terkonfirmasi bukan editor", "anon tidak bisa memanggil pastikan_editor"), `tests/e2e/login.spec.ts` ("email di luar allowlist ditolak dengan pesan") | PASS di dev (`tests/db/akses.test.ts`, `tests/e2e/login.spec.ts`). Penolakan akun Google asli dicek di produksi |
+| 3 | Semua vendor Lamaran yang sudah ada bisa diinput lengkap dengan Kontrak dan Pembayarannya | `28b8b18`, `f865d47`, `5f870ee`, `0274cf3`, `217e632`, `6798fa1`, `c7dc219`, `13dd3f3`. Migration `0002_vendor.sql`, `0003_keuangan.sql`, halaman `src/app/(app)/vendor/**` | `tests/e2e/vendor.spec.ts`, `paket.spec.ts`, `pembayaran.spec.ts`, `tests/db/vendor.test.ts`, `paket.test.ts`, `keuangan.test.ts`, `kontrak-fungsi.test.ts` | PASS untuk alurnya (test di kolom sebelah dan `tests/gate`). Input data vendor Lamaran asli dikerjakan Rendy |
+| 4 | Komparasi menampilkan minimal tiga Paket dari Vendor berbeda secara sejajar per Komponen, dan terbaca di layar HP | `481ee0f`. `src/app/(app)/komparasi/[kategoriId]/page.tsx`, `.tabel-geser` dan `.tabel-komparasi` di `globals.css` | `tests/e2e/komparasi.spec.ts` ("375px: baris berurutan, sel kosong, geser horizontal hanya di tabel, label tetap terlihat", memakai Paket A, B, C) | PASS. Tiga Paket dari tiga Vendor sejajar di 375px dan desktop (E komparasi 375px, `tests/gate`) |
+| 5 | Pembayaran Terjadwal yang lewat Jatuh Tempo muncul di kelompok Terlambat | `fded50d`, `bf9ae6a`. View `agenda` di `0004_tugas.sql`, `kelompokJatuhTempo()` di `src/lib/tanggal.ts`, `src/app/(app)/page.tsx` | `tests/unit/tanggal.test.ts` ("mengelompokkan tanggal jatuh tempo"), `tests/db/agenda.test.ts` ("pembayaran terjadwal tampil..."), `tests/e2e/dashboard.spec.ts` ("pembayaran terjadwal yang lewat jatuh tempo masuk kelompok terlambat": Pelunasan dengan Jatuh Tempo kemarin, tanggal Jakarta, tampil di Terlambat dengan judul "Pelunasan Uji Venue Agenda" dan "Rp 5.000.000"). Celah sebelumnya (e2e Terlambat hanya memakai Tugas) sudah ditutup di kode | PASS (unit, db, e2e, dan Termin terlambat di data uji `tests/gate`) |
+| 6 | Rekap Kontribusi per Pihak sama dengan hasil hitung manual | `c7dc219`. View `kontribusi_pihak` dan `kontribusi_pihak_vendor` di `0003_keuangan.sql`, `src/app/(app)/kontribusi/page.tsx` | `tests/db/keuangan.test.ts` ("kontribusi per pihak"), `tests/e2e/pembayaran.spec.ts` ("DP dibayar, ... dan kontribusi") | PASS untuk hitungan di test. Pembandingan dengan hitungan manual dari data asli dikerjakan Rendy |
+| 7 | Share Link tanpa centang Keuangan tidak memuat nominal apa pun, termasuk di response API | `5e311f7`, `957ce5e`, `1279d4f`. `baca_share_link()` di `0005_share_link.sql`, `src/app/s/[token]/page.tsx`, `src/lib/supabase/anon.ts` | `tests/db/share.test.ts` ("tanpa keuangan...", "kunci hasil persis sesuai bagian"), `tests/e2e/share.spec.ts` ("share link default tanpa keuangan...", mengecek teks halaman dan response mentah tidak memuat "Rp") | PASS (`tests/db/share.test.ts`, `tests/e2e/share.spec.ts`, termasuk response mentah tanpa "Rp") |
+| 8 | Lolos Delivery Gate antislop | Laporan ini | Bagian 1 sampai 4 | LULUS untuk semua yang bisa dicek di dev (bagian 3, 4, 6) |
 
 ## 6. Risiko dan catatan
 
+### Temuan Delivery Gate 25 November 2026 (sudah diperbaiki dan diverifikasi)
+
+1. **"Coba lagi" tidak memulihkan halaman.** Semua `error.tsx` (11 file) memanggil `reset()`. Di Next.js 16, `reset()` hanya merender ulang tanpa mengambil ulang data server, jadi setelah galat sementara (jaringan, Supabase) halaman tetap menampilkan pesan error. Dibuktikan di `tests/gate/galat.spec.ts`: grant dicabut, halaman error, grant dikembalikan, lalu "Coba lagi" tetap gagal. Diganti `retry()` (stabil sejak Next.js 16.3), test sekarang PASS untuk halaman Editor dan Pembaca.
+2. **Target ketuk "Ubah" (Acara) dan "Lihat" (Vendor) hanya selebar 35 sampai 36px.** Tingginya sudah 44px, dan test e2e lama hanya mengukur tinggi. `.tautan-aksi` diberi `min-width: 44px`. Sapu `tests/gate` sekarang mengukur lebar dan tinggi.
+3. **Test yang salah, bukan aplikasi:** `tests/db/agenda.test.ts` dan `tests/e2e/acara.spec.ts` (bagian 4).
+
+### Catatan dari Delivery Gate 25 November 2026
+
+- **Rate limit Supabase Auth di project dev.** Setiap test e2e login ulang lewat `/api/dev-login`, yang memanggil `verifyOtp`. Setelah sekitar 4 login berturut-turut, Supabase membalas `429 over_request_rate_limit`, route membalas 404, dan test menunggu sampai timeout lalu lulus di retry. Ini penyebab test e2e "flaky". Pilihan: naikkan batas "token verifications" di Authentication > Rate Limits project dev, atau pakai ulang sesi login (`storageState`) per file test. Aplikasi produksi tidak terpengaruh, karena satu login Google hanya satu verifikasi.
+- **Teks kotak pilih file** mengikuti bahasa browser ("Choose Files" di Chrome berbahasa Inggris). Di HP berbahasa Indonesia teksnya ikut bahasa perangkat.
+- **Clipboard ditolak** pada "Salin link" tidak dipaksa terpisah. Jalur "Link disalin" dicek E dan I.
+- **Tampilan kosong `/acara` dan `/komparasi`** tidak dicek: 4 Acara default selalu ada, dan data uji selalu punya Paket.
+
+
+
 ### FAIL yang ditemukan dan belum diperbaiki
 
-Tidak ada lagi di kode. Semua temuan di bawah sudah diperbaiki di kode, tetapi belum diverifikasi.
+Tidak ada. Semua temuan sudah diperbaiki dan diverifikasi pada 25 November 2026, kecuali yang hanya bisa dicek di produksi.
 
-### FAIL dan celah yang sudah diperbaiki di kode (BELUM DIVERIFIKASI)
+### FAIL dan celah dari 24 November 2026 (sekarang terverifikasi)
 
-Diperbaiki di commit "fix: tutup celah delivery gate fase 1". Hanya dicek sintaksnya, belum dijalankan di browser atau lewat test.
+Diperbaiki di commit "fix: tutup celah delivery gate fase 1". Pada 25 November 2026 semuanya diverifikasi lewat test dan checklist bagian 3, kecuali sesi lebih dari 1 jam (nomor 5) dan tampilan placeholder di Safari dan Firefox (nomor 6), yang dicek di produksi.
 
 1. **Halaman 404 bawaan Next.js berbahasa Inggris.** Ditambah `src/app/not-found.tsx`: judul "Rendy & Dinar", pesan "Halaman tidak ditemukan.", link "Kembali ke dashboard" ke `/`. Memakai class baru `.halaman-mandiri` (lebar dan padding sama dengan `.halaman-pembaca`), tanpa navigasi bawah. `not-found.tsx` yang sudah ada di `vendor/[id]`, `vendor/[id]/paket`, dan `komparasi/[kategoriId]` tidak diubah. Di commit kedua `/acara/{id}` mendapat `not-found.tsx` sendiri (lihat nomor 7), jadi halaman root hanya untuk URL yang tidak cocok dengan route mana pun.
 2. **Filter Tugas belum sesuai PRD.** `/tugas` sekarang punya filter PIC, Acara, Vendor, dan Status (`?pic=&acara=&vendor=&status=`). Id Acara dan Vendor dicek dengan `adalahUuid()`, nilai lain diabaikan. Keduanya ikut dihitung di `adaFilter`, jadi tampilan kosong menawarkan "Hapus filter". Pilihan Acara diurutkan per tanggal lalu nama, Vendor per nama, sama dengan form Tugas. Class `.filter-dua` diganti `.filter-empat`: satu kolom di bawah 560px, dua kolom di atasnya dengan "Terapkan" di baris sendiri. Test baru di `tugas.spec.ts`: "filter vendor..." dan "filter acara...".
@@ -297,17 +333,17 @@ Diperbaiki di commit "fix: pindahkan proxy ke src dan rapikan panduan deploy", j
 - `tugas/DaftarTugas.tsx`: link nama Vendor dan nama Acara diberi `tautan-aksi`, sama dengan item dashboard.
 - `globals.css`: `.tombol-sekunder:disabled` diberi `opacity: 0.7; cursor: not-allowed`, supaya "Simpan status", "Naik", dan "Turun" yang nonaktif terlihat nonaktif.
 
-Perbaikan ini belum dicek di browser dan belum diuji. Semuanya ikut dicek di tabel bagian 3 dan test bagian 4.
+Semuanya ikut dicek di tabel bagian 3 dan test bagian 4 pada 25 November 2026: PASS.
 
 ### Risiko teknis
 
-- **`src/lib/database.types.ts` sempat diedit tangan dan sudah tertinggal.** Commit terakhir yang mengubahnya `5e311f7`, sedangkan migration masih diubah sesudahnya di `bf9ae6a` (`0004`), `957ce5e` dan `1279d4f` (`0005`), serta `e483b9a` (`0001`, `0002`). Wajib generate ulang sebelum deploy.
+- **`src/lib/database.types.ts` sempat diedit tangan.** Sudah dicek 25 November 2026 setelah `db reset`: hasil `gen types` sama persis dengan file ini. Tetap generate ulang setiap ada migration baru.
 - **Klien Supabase tanpa generic `Database`.** `src/lib/supabase/server.ts` dan `browser.ts` memanggil `createServerClient(...)` dan `createBrowserClient(...)` tanpa `<Database>`, jadi hampir semua query di aplikasi tidak dicek tipe (hasilnya `any`). Hanya `src/lib/supabase/anon.ts` yang memakai `Database`. Saran: tambahkan `createServerClient<Database>(...)` dan `createBrowserClient<Database>(...)` setelah types digenerate ulang, lalu perbaiki semua yang dilaporkan `npx tsc --noEmit`. Kemungkinan besar akan ada error baru, misalnya di embed relasi dan kolom view yang nullable.
-- **Migration diubah di tempat.** `0001` sampai `0005` diubah beberapa kali setelah pertama dibuat. Project dev harus di-`db reset --linked` supaya skemanya sama persis dengan file. Setelah deploy pertama, perubahan hanya lewat migration baru (`docs/deploy.md` langkah 11).
+- **Migration diubah di tempat.** Project dev sudah di-`db reset --linked` pada 25 November 2026, `0001` sampai `0006` berjalan tanpa error, dan semua test lulus terhadap skema itu. Setelah deploy pertama, perubahan hanya lewat migration baru (`docs/deploy.md` langkah 11).
 - **`db reset --linked` setelah link ke produksi akan menghapus data asli.** `docs/deploy.md` meminta link kembali ke dev setelah `db push` dan mengecek `supabase/.temp/project-ref`.
 - **Env Preview di Vercel.** Kalau key produksi juga diisi untuk Preview, branch preview menulis ke data asli. `docs/deploy.md` meminta env hanya untuk Production.
 - **`SUPABASE_SERVICE_ROLE_KEY` tidak dibutuhkan di produksi.** Di kode aplikasi key ini hanya dibaca `src/app/api/dev-login/route.ts`, yang sudah 404 di produksi (`NODE_ENV === 'production'`) sebelum key dipakai. Pemakaian lain hanya di `tests/db/helpers.ts`.
 - **PWA belum punya ikon.** `manifest.webmanifest` sengaja tanpa ikon (plan Task 1, menunggu keputusan logo, R-23). Chrome Android biasanya baru menawarkan install kalau manifest punya ikon, jadi "PWA yang bisa di-install" perlu dicek di HP.
-- **Proxy baru dipindah, belum pernah berjalan.** Selama Fase 1 refresh sesi tidak pernah aktif (lihat nomor 5 di atas), jadi semua test e2e sejauh ini lolos tanpa proxy. Setelah pindah ke `src/proxy.ts`, setiap request (kecuali aset statis di matcher) memanggil `supabase.auth.getUser()`. Jalankan ulang semua test e2e dan `npm run build` (pastikan output build menyebut Proxy), lalu cek langkah 10 nomor 9 di `docs/deploy.md`.
+- **Proxy refresh sesi.** `src/proxy.ts` sekarang terbaca (build menyebut `Proxy (Middleware)`) dan semua test e2e lulus dengan proxy aktif. Sesi yang bertahan lebih dari 1 jam baru bisa dicek di produksi (`docs/deploy.md` langkah 10 nomor 9).
 - **Link "Atur Komponen" di form Paket** membuka halaman lain, jadi isian Paket yang belum disimpan hilang.
 - **Commit `4c8e934` bernama "initial commit"** di tengah riwayat dan tidak mengikuti format Conventional Commits. Hanya catatan.
