@@ -113,6 +113,7 @@ Skala yang dipakai (dalam `rem`, 1rem = 16px): `0.125`, `0.25`, `0.5`, `0.75`, `
 | Nilai | Dipakai di | Alasan |
 |---|---|---|
 | `min-height: 44px` | Tombol, isian form, `.tautan-aksi`, `summary`, link di menu Lainnya, `label.pilihan` | Tap target minimal dari Global Constraints |
+| `min-width: 44px` | `.tautan-aksi` | Link pendek seperti "Ubah" dan "Lihat" tetap 44x44 px, bukan hanya 44px tingginya |
 | `min-height: 56px` | Item navigasi bawah | Lebih mudah diketuk jempol di tepi bawah layar |
 | `24px` | Kotak centang di `label.pilihan` | Kotak terlihat jelas, area ketuknya tetap 44px lewat label |
 | `opacity: 0.7` | Tombol nonaktif (`.tombol-utama`, `.tombol-bahaya`, `.tombol-sekunder`) | Menandai tombol nonaktif tanpa warna baru. Kontrol nonaktif tidak wajib lolos 4.5:1 (WCAG 1.4.3), tetapi hasilnya tetap dicatat di tabel kontras |

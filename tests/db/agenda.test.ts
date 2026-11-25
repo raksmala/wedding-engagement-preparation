@@ -135,7 +135,7 @@ describe('view agenda', () => {
         { judul: 'Uji Agenda Ada', pic_id: picId, jatuh_tempo: '2026-12-03', vendor_id: vendorId, acara_id: acaraId },
         { judul: 'Uji Agenda Tanpa Tanggal', pic_id: picId },
         { judul: 'Uji Agenda Selesai', pic_id: picId, jatuh_tempo: '2026-12-03', status: 'selesai' },
-      ])
+      ], { defaultToNull: false })
       .select('id, judul');
     if (error) throw error;
     const id = Object.fromEntries(data.map((t) => [t.judul, t.id]));

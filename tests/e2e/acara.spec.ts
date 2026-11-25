@@ -68,8 +68,7 @@ test('mengubah tanggal dan lokasi, lalu perkiraan', async ({ page }) => {
 test('Acara bertanggal tampil sebelum yang belum bertanggal', async ({ page }) => {
   await editor.from('acara').update({ tanggal: '2026-12-20' }).eq('nama', 'Ngunduh Mantu');
   await page.goto('/acara');
-  const judul = await page.getByRole('listitem').getByRole('heading').allTextContents();
-  expect(judul[0]).toBe('Ngunduh Mantu');
+  await expect(page.getByRole('listitem').getByRole('heading').first()).toHaveText('Ngunduh Mantu');
 });
 
 test('menambah dan menghapus Acara dengan konfirmasi, Escape membatalkan', async ({ page }) => {
